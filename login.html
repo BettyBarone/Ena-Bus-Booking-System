@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Ena Coach</title>
+    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <header>
+        <h1>Login to Ena Coach</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="booking.html">Book a Ticket</a></li>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="register.html">Register</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="login-form">
+        <h2>Sign In</h2>
+        <form action="login.php" method="POST">
+            <label for="email">Email:</label>
+            <input type="email" name="email" placeholder="Enter your email" required>
+
+            <label for="password">Password:</label>
+           
+            <div class="password-container">
+                <input type="password" id="password-login" name="password" placeholder="Enter your password" required>
+                <span class="toggle-icon" onclick="togglePassword()">
+                    <i id="eyeIcon-login" class="fas fa-eye"></i> 
+                </span>
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+        <p>Don't have an account? <a href="register.html">Register here</a></p>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 Ena Coach. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        function togglePassword() {
+            var passwordLoginField = document.getElementById("password-login");
+            var eyeLoginIcon = document.getElementById("eyeIcon-login");
+
+            
+            if (passwordLoginField.type === "password") {
+                passwordLoginField.type = "text";
+                eyeLoginIcon.classList.remove("fa-eye");
+                eyeLoginIcon.classList.add("fa-eye-slash");
+            } else {
+                passwordLoginField.type = "password";
+                eyeLoginIcon.classList.remove("fa-eye-slash");
+                eyeLoginIcon.classList.add("fa-eye");
+            }
+
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+        // Get current page URL
+        var currentPage = window.location.pathname.split("/").pop(); 
+        
+        // Get all navigation links
+        var navLinks = document.querySelectorAll("nav ul li a");
+
+        // Loop through links and check if href matches current page
+        navLinks.forEach(function (link) {
+            if (link.getAttribute("href") === currentPage) {
+                link.classList.add("active");
+            }
+        });
+    });
+    </script>
+</body>
+</html>

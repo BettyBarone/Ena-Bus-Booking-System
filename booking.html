@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Ticket - Ena Coach</title>
+    <link rel="stylesheet" href="booking.css">
+</head>
+<body>
+    <header>
+        <h1>Book a Bus Ticket</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="booking.html">Book a Ticket</a></li>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="register.html">Register</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="booking-form">
+        <h2>Reserve Your Seat</h2>
+        <form action="booking.php" method="POST">
+            <label for="from">From:</label>
+            <input type="text" name="from" placeholder="Enter departure location" required>
+
+            <label for="to">To:</label>
+            <input type="text" name="to" placeholder="Enter destination" required>
+
+            <label for="date">Date of Travel:</label>
+            <input type="date" name="date" required>
+
+            <label for="seats">Number of Seats:</label>
+            <input type="number" name="seats" min="1" max="10" required>
+
+            <button type="submit">Check Availability</button>
+        </form>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 Ena Coach. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        // Get current page URL
+        var currentPage = window.location.pathname.split("/").pop(); 
+        
+        // Get all navigation links
+        var navLinks = document.querySelectorAll("nav ul li a");
+
+        // Loop through links and check if href matches current page
+        navLinks.forEach(function (link) {
+            if (link.getAttribute("href") === currentPage) {
+                link.classList.add("active");
+            }
+        });
+    });
+    </script>
+</body>
+</html>
