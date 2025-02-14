@@ -88,8 +88,14 @@ nav ul li a.active {
 /* Services Section */
 .services {
     text-align: center;
-    padding: 40px;
+    padding: 1rem;
     background-color: white;
+    
+}
+
+.service-containers {
+    display: flex;
+
 }
 
 .service-box {
@@ -101,9 +107,9 @@ nav ul li a.active {
     border-radius: 10px;
 }
 
-.service-box img {
-    /* width: 50px; */
-}
+/* .service-box img {
+    width: 50px;
+} */
 
 .service-box h3 {
     margin: 10px 0;

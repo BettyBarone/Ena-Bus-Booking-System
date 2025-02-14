@@ -1,0 +1,380 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+.sidebar {
+    width: 15%;
+    background: #ff6600;
+    color: white;
+    padding: 20px;
+    height: 100vh;
+    position: fixed;
+}
+
+.sidebar h2 {
+    text-align: center;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 10px;
+    margin: 5px 0;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.sidebar ul li a:hover, .sidebar ul li a:active {
+    background: #333;
+    padding-left: 10px;
+}
+
+.content {
+    margin-left: 20%;
+    /* padding: 1rem; */
+    width: 79%;
+}
+
+h2 {
+    color: #333;
+    background-color: #ff6600;
+    text-align: center;
+    margin-top: 0;
+    padding: 0.5rem;
+}
+
+.section {
+    display: none;
+}
+
+.section.active {
+    display: block;
+}
+
+.dashboard-cards {
+    display: flex;
+    gap: 1rem;
+    margin: 20px 0;
+}
+
+.card {
+    background: #ff6600;
+    color: white;
+    padding: 20px;
+    width: 30%;
+    text-align: center;
+    border-radius: 5px;
+}
+
+.card h3 {
+    margin: 0;
+}
+
+.card p {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+}
+
+th {
+    background: #ff6600;
+    color: white;
+}
+
+.profile p {
+    text-align: center;
+    font-size: inherit;
+}
+
+.profile-container {
+    background: #f8f9fa;
+    padding: 3rem;
+    margin-left: 15rem;
+    border-radius: 5px;
+    width: 50%;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile-info label {
+    display: block;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.profile-info input {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: inherit;
+}
+
+.profile-info button {
+    background: #ff6600;
+    color: white;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    margin-top: 1.5rem;
+    font-size: inherit;
+    border-radius: 5px;
+    margin-right: 2rem;
+}
+
+.profile-info button:hover {
+    background: #ff6600;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+}
+
+th {
+    background: #007BFF;
+    color: white;
+}
+
+button {
+    background: #FF6347;
+    color: white;
+    padding: 8px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+button:hover {
+    background: #FF4500;
+}
+
+h2, h3 {
+    font-size: 24px;
+    color: #333;
+}
+
+/* Booking Section Styling */
+#booking {
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+}
+
+th {
+    background-color: #FF4500;
+    font-weight: bold;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* Reserve Your Seat Form Styling */
+#reserve-seat {
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 60%;
+    margin: 20px auto;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+label {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+select, input[type="date"], button {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 100%;
+}
+
+input[type="date"] {
+    cursor: pointer;
+}
+
+button[type="submit"] {
+    background-color: #007bff;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+#confirmation {
+    padding: 15px;
+    background-color: #dff0d8;
+    border: 1px solid #d0e9c6;
+    color: #3c763d;
+    margin-top: 20px;
+    text-align: center;
+    border-radius: 5px;
+}
+
+/* Back Button Styling */
+#backToBooking {
+    background-color: #f44336;
+    color: white;
+    font-size: 14px;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+#backToBooking:hover {
+    background-color: #e53935;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+    #reserve-seat {
+        width: 90%;
+    }
+
+    table {
+        font-size: 14px;
+    }
+
+    th, td {
+        padding: 8px;
+    }
+
+    select, input[type="date"], button {
+        font-size: 14px;
+    }
+}
+
+/* Payment Section Styling */
+#payment {
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 60%;
+    margin: 20px auto;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+label {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+input[type="text"], input[type="email"], input[type="tel"] {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 100%;
+}
+
+input[type="tel"] {
+    cursor: pointer;
+}
+
+button[type="submit"] {
+    background-color: #007bff;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 12px 20px;
+    border-radius: 5px;
+    width: 100%;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+    #payment {
+        width: 90%;
+    }
+
+    input[type="text"], input[type="email"], input[type="tel"], button {
+        font-size: 14px;
+    }
+}
+
+

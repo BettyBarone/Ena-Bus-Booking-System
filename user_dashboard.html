@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="user_dashboard.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>User Panel</h2>
+        <ul>
+            <li><a href="#" onclick="showSection('dashboard')">Dashboard</a></li>
+            <li><a href="#" onclick="showSection('profile')">Profile</a></li>
+            <li><a href="#" onclick="showSection('booking')">Booking</a></li>
+            <li><a href="#" onclick="showSection('payment')">Payment</a></li>
+            <li><a href="/admin-panel">Admin Panel</a></li>
+            <li><a href="/logout">Logout</a></li>
+        </ul>
+    </div>
+
+    <div class="content">
+        <div id="dashboard" class="section">
+            <h2>Dashboard</h2>
+            <p>Welcome to your dashboard, <span id="username">User</span>!</p>
+        
+            <div class="dashboard-cards">
+                <div class="card">
+                    <h3>Total Bookings</h3>
+                    <p id="totalBookings">0</p>
+                </div>
+                <div class="card">
+                    <h3>Upcoming Trips</h3>
+                    <p id="upcomingTrips">0</p>
+                </div>
+                <div class="card">
+                    <h3>Total Payments</h3>
+                    <p id="totalPayments">Ksh 0.00</p>
+                </div>
+            </div>
+        
+            <h3>Recent Bookings</h3>
+            <table>
+                <tr>
+                    <th>Bus Name</th>
+                    <th>Route</th>
+                    <th>Date</th>
+                    <th>Seat No</th>
+                    <th>Status</th>
+                </tr>
+                <tbody id="recentBookings">
+                    <tr><td colspan="5">No bookings available.</td></tr>
+                </tbody>
+            </table>
+        
+            <h3>Recent Payments</h3>
+            <table>
+                <tr>
+                    <th>Amount</th>
+                    <th>Transaction ID</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+                <tbody id="recentPayments">
+                    <tr><td colspan="4">No transactions available.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+
+        <div id="profile" class="section profile" style="display: none;">
+            <h2>Profile</h2>
+            <p>Manage your personal information here.</p>
+        
+            <div class="profile-container">
+                <div class="profile-info">
+                    <label>Full Name:</label>
+                    <input type="text" id="fullname" value="John Doe" disabled>
+        
+                    <label>Email:</label>
+                    <input type="email" id="email" value="johndoe@example.com" disabled>
+        
+                    <label>Phone:</label>
+                    <input type="text" id="phone" value="+254700123456" disabled>
+        
+                    <label>Password:</label>
+                    <input type="password" id="password" value="********" disabled>
+        
+                    <button onclick="enableEditing()">Edit Profile</button>
+                    <button onclick="saveProfile()" id="saveBtn" style="display: none;">Save Changes</button>
+                </div>
+            </div>
+        </div>
+        
+
+        <!-- <div id="booking" class="section" style="display: none;">
+            <h2>Booking</h2>
+            <p>View and manage your bus bookings.</p>
+        </div> -->
+        <div id="booking" class="section" style="display: block;">
+            <h2>Booking</h2>
+            <p>View and manage your bus bookings here.</p>
+        
+            <!-- Available Bus List -->
+            <h3>Available Buses</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Bus Name</th>
+                        <th>Route</th>
+                        <th>Departure Time</th>
+                        <th>Available Seats</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="availableBuses">
+                    <tr><td colspan="5">Loading buses...</td></tr>
+                </tbody>
+            </table>
+        
+            <!-- My Bookings -->
+            <h3>My Bookings</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Bus Name</th>
+                        <th>Route</th>
+                        <th>Seat Number</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="myBookings">
+                    <tr><td colspan="5">No bookings found.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Reserve Your Seat Form (hidden by default) -->
+        <div id="reserve-seat" class="section" style="display: none;">
+            <h2>Reserve Your Seat</h2>
+            <p>Select a bus and seat from the available options below.</p>
+        
+            <!-- Bus Selection Form -->
+            <form id="reserveForm">
+                <label for="bus">Choose a Bus:</label>
+                <select id="bus" name="bus" onchange="updateSeatOptions()">
+                    <option value="">Select Bus</option>
+                    <!-- Bus options will be dynamically populated -->
+                </select>
+        
+                <label for="date">Select Date:</label>
+                <input type="date" id="date" name="date" required>
+        
+                <label for="seats">Choose a Seat:</label>
+                <select id="seats" name="seats" required>
+                    <option value="">Select Seat</option>
+                    <!-- Seat options will be dynamically populated -->
+                </select>
+        
+                <button type="submit">Reserve Seat</button>
+            </form>
+        
+            <!-- Back Button -->
+            <button id="backToBooking" onclick="backToBooking()">Back to Booking</button>
+        
+            <div id="confirmation" style="display: none;">
+                <p>Your seat has been reserved! Thank you for choosing us.</p>
+            </div>
+        </div>
+        
+
+        <div id="payment" class="section" style="display: block;">
+            <h2>Complete Your Payment</h2>
+        
+            <!-- Payment Form -->
+            <form action="process_payment.php" method="POST">
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" name="name" required>
+        
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+        
+                <label for="phone">Phone Number:</label>
+                <input type="tel" id="phone" name="phone" placeholder="07XXXXXXXX" required>
+        
+                <label for="booking_id">Booking ID:</label>
+                <input type="text" id="booking_id" name="booking_id" value="BK123456" readonly>
+        
+                <label for="bus">Bus Name & Route:</label>
+                <input type="text" id="bus" name="bus" value="Ena Coach - Nairobi to Mombasa" readonly>
+        
+                <label for="fare">Total Fare (KES):</label>
+                <input type="text" id="fare" name="fare" value="1500" readonly>
+        
+                <label for="mpesa_number">M-Pesa Number:</label>
+                <input type="tel" id="mpesa_number" name="mpesa_number" placeholder="Enter M-Pesa number" required>
+        
+                <button type="submit">Proceed to Pay</button>
+            </form>
+        </div>
+        
+    </div>
+
+    <script>
+        function showSection(section) {
+    let sections = document.querySelectorAll('.section');
+    sections.forEach(sec => sec.style.display = "none");
+
+    document.getElementById(section).style.display = "block";
+}
+
+// Show Dashboard by default
+document.addEventListener("DOMContentLoaded", function () {
+    showSection('dashboard');
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Simulate fetching data from the backend
+    let userData = {
+        username: "John Doe",
+        totalBookings: 5,
+        upcomingTrips: 2,
+        totalPayments: 4500,
+        recentBookings: [
+            { bus: "Ena Coach Express", route: "Nairobi - Kisumu", date: "2025-02-20", seat: "12A", status: "Confirmed" },
+            { bus: "Modern Coast", route: "Nairobi - Mombasa", date: "2025-03-01", seat: "5C", status: "Pending" }
+        ],
+        recentPayments: [
+            { amount: "Ksh 2000", transactionId: "MPESA123456", status: "Completed", date: "2025-02-10" },
+            { amount: "Ksh 2500", transactionId: "MPESA654321", status: "Pending", date: "2025-02-12" }
+        ]
+    };
+
+    document.getElementById("username").innerText = userData.username;
+    document.getElementById("totalBookings").innerText = userData.totalBookings;
+    document.getElementById("upcomingTrips").innerText = userData.upcomingTrips;
+    document.getElementById("totalPayments").innerText = `Ksh ${userData.totalPayments}`;
+
+    let bookingsTable = document.getElementById("recentBookings");
+    bookingsTable.innerHTML = "";
+    userData.recentBookings.forEach(booking => {
+        let row = `<tr>
+            <td>${booking.bus}</td>
+            <td>${booking.route}</td>
+            <td>${booking.date}</td>
+            <td>${booking.seat}</td>
+            <td>${booking.status}</td>
+        </tr>`;
+        bookingsTable.innerHTML += row;
+    });
+
+    let paymentsTable = document.getElementById("recentPayments");
+    paymentsTable.innerHTML = "";
+    userData.recentPayments.forEach(payment => {
+        let row = `<tr>
+            <td>${payment.amount}</td>
+            <td>${payment.transactionId}</td>
+            <td>${payment.status}</td>
+            <td>${payment.date}</td>
+        </tr>`;
+        paymentsTable.innerHTML += row;
+    });
+});
+
+
+function enableEditing() {
+    document.getElementById("fullname").disabled = false;
+    document.getElementById("email").disabled = false;
+    document.getElementById("phone").disabled = false;
+    document.getElementById("password").disabled = false;
+    
+    document.getElementById("saveBtn").style.display = "inline-block";
+}
+
+function saveProfile() {
+    let fullname = document.getElementById("fullname").value;
+    let email = document.getElementById("email").value;
+    let phone = document.getElementById("phone").value;
+    let password = document.getElementById("password").value;
+
+    // Simulate saving data (In real scenario, send data to Django backend)
+    alert("Profile updated successfully!");
+
+    document.getElementById("fullname").disabled = true;
+    document.getElementById("email").disabled = true;
+    document.getElementById("phone").disabled = true;
+    document.getElementById("password").disabled = true;
+
+    document.getElementById("saveBtn").style.display = "none";
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Simulate available buses and seats data
+    let buses = [
+        { bus: "Ena Coach Express", route: "Nairobi - Kisumu", seats: ["1A", "1B", "1C", "2A", "2B"] },
+        { bus: "Modern Coast", route: "Nairobi - Mombasa", seats: ["1A", "1B", "2A", "2C"] }
+    ];
+
+    // Populate the available buses table with "Book Now" buttons
+    let availableTable = document.getElementById("availableBuses");
+    availableTable.innerHTML = "";
+    buses.forEach(bus => {
+        let row = `<tr>
+            <td>${bus.bus}</td>
+            <td>${bus.route}</td>
+            <td>2025-02-20 07:00 AM</td> <!-- Simulated time -->
+            <td>${bus.seats.length}</td>
+            <td><button onclick="showReserveForm('${bus.bus}')">Book Now</button></td>
+        </tr>`;
+        availableTable.innerHTML += row;
+    });
+
+    // Show the Reserve Your Seat form when "Book Now" is clicked
+    window.showReserveForm = function(busName) {
+        // Hide Available Buses and My Bookings section
+        document.getElementById("booking").style.display = "none";
+
+        // Show the Reserve Your Seat form
+        document.getElementById("reserve-seat").style.display = "block";
+
+        // Find the selected bus from the available buses
+        let selectedBus = buses.find(bus => bus.bus === busName);
+
+        // Pre-select the bus in the form
+        document.getElementById("bus").value = selectedBus.bus;
+
+        // Update the seat options based on the selected bus
+        updateSeatOptions(selectedBus);
+    };
+
+    // Update seat options dynamically based on the selected bus
+    window.updateSeatOptions = function(bus) {
+        let seatSelect = document.getElementById("seats");
+        seatSelect.innerHTML = "<option value=''>Select Seat</option>";  // Clear previous options
+
+        if (bus) {
+            bus.seats.forEach(seat => {
+                let option = document.createElement("option");
+                option.value = seat;
+                option.innerText = seat;
+                seatSelect.appendChild(option);
+            });
+        }
+    };
+
+    // Handle form submission (Reserve Seat)
+    document.getElementById("reserveForm").addEventListener("submit", function (event) {
+        event.preventDefault();  // Prevent form submission to server
+
+        let busName = document.getElementById("bus").value;
+        let date = document.getElementById("date").value;
+        let seat = document.getElementById("seats").value;
+
+        if (busName && seat) {
+            // In a real application, send this data to the Django backend
+            alert(`Seat ${seat} has been reserved on ${busName} for ${date}.`);
+            document.getElementById("confirmation").style.display = "block";  // Show confirmation
+        } else {
+            alert("Please select all fields.");
+        }
+    });
+
+    // Back to the Booking Section
+    window.backToBooking = function() {
+        // Hide Reserve Your Seat form
+        document.getElementById("reserve-seat").style.display = "none";
+
+        // Show Available Buses and My Bookings section again
+        document.getElementById("booking").style.display = "block";
+    };
+});
+
+
+
+    </script>
+</body>
+</html>

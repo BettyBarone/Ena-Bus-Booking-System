@@ -3,55 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Toggle</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        .password-container {
-            position: relative;
-            width: 300px;
-        }
-        .password-container input {
-            width: 100%;
-            padding: 10px;
-            padding-right: 40px; /* Make space for icon */
-            font-size: 16px;
-        }
-        .password-container .toggle-icon {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            font-size: 18px;
-            color: gray;
-        }
-    </style>
+    <title>Admin Panel - Bus Booking</title>
+    <link rel="stylesheet" href="test2.css">
 </head>
 <body>
 
-<div class="password-container">
-    <input type="password" id="password" placeholder="Enter your password">
-    <span class="toggle-icon" onclick="togglePassword()">
-        <i id="eyeIcon" class="fas fa-eye"></i> 
-    </span>
-</div>
+    <div class="sidebar">
+        <h2>Admin Panel</h2>
+        <ul>
+            <li><a href="#" onclick="showSection('dashboard')">Dashboard</a></li>
+            <li><a href="#" onclick="showSection('buses')">Manage Buses</a></li>
+            <li><a href="#" onclick="showSection('users')">Manage Users</a></li>
+            <li><a href="#" onclick="showSection('bookings')">Manage Bookings</a></li>
+            <li><a href="#" onclick="showSection('payments')">Payments & Transactions</a></li>
+            <li><a href="/logout">Logout</a></li>
+        </ul>
+    </div>
 
-<script>
-    function togglePassword() {
-        var passwordField = document.getElementById("password");
-        var eyeIcon = document.getElementById("eyeIcon");
+    <div class="content">
+        <div id="dashboard" class="section">
+            <h2>Dashboard</h2>
+            <p>Welcome to the admin panel.</p>
+        </div>
 
-        if (passwordField.type === "password") {
-            passwordField.type = "text";
-            eyeIcon.classList.remove("fa-eye");
-            eyeIcon.classList.add("fa-eye-slash");
-        } else {
-            passwordField.type = "password";
-            eyeIcon.classList.remove("fa-eye-slash");
-            eyeIcon.classList.add("fa-eye");
-        }
+        <div id="buses" class="section" style="display: none;">
+            <h2>Manage Buses</h2>
+            <button onclick="showBusForm()">+ Add Bus</button>
+            <div id="bus-form" style="display: none;">
+                <input type="text" id="bus_name" placeholder="Bus Name">
+                <input type="text" id="route" placeholder="Route">
+                <input type="number" id="capacity" placeholder="Seating Capacity">
+                <button onclick="addBus()">Save</button>
+            </div>
+            <table id="bus-list">
+                <tr><th>Bus Name</th><th>Route</th><th>Capacity</th><th>Actions</th></tr>
+            </table>
+        </div>
+
+        <div id="users" class="section" style="display: none;">
+            <h2>Manage Users</h2>
+            <table>
+                <tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr>
+                <!-- User data will go here -->
+            </table>
+        </div>
+
+        <div id="bookings" class="section" style="display: none;">
+            <h2>Manage Bookings</h2>
+            <table>
+                <tr><th>User</th><th>Bus</th><th>Seat No</th><th>Status</th><th>Actions</th></tr>
+                <!-- Booking data will go here -->
+            </table>
+        </div>
+
+        <div id="payments" class="section" style="display: none;">
+            <h2>Payments & Transactions</h2>
+            <table>
+                <tr><th>User</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+                <!-- Payment data will go here -->
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function showSection(section) {
+    let sections = document.querySelectorAll('.section');
+    sections.forEach(sec => sec.style.display = "none");
+
+    document.getElementById(section).style.display = "block";
+}
+
+function showBusForm() {
+    document.getElementById("bus-form").style.display = "block";
+}
+
+function addBus() {
+    let busName = document.getElementById("bus_name").value;
+    let route = document.getElementById("route").value;
+    let capacity = document.getElementById("capacity").value;
+
+    if (busName && route && capacity) {
+        let table = document.getElementById("bus-list");
+        let row = table.insertRow();
+        row.innerHTML = `<td>${busName}</td><td>${route}</td><td>${capacity}</td><td><button onclick="deleteRow(this)">Delete</button></td>`;
+
+        document.getElementById("bus-form").reset();
+        document.getElementById("bus-form").style.display = "none";
+    } else {
+        alert("Please fill all fields!");
     }
-</script>
+}
 
+function deleteRow(btn) {
+    let row = btn.parentNode.parentNode;
+    row.parentNode.removeChild(row);
+}
+
+    </script>
 </body>
 </html>
