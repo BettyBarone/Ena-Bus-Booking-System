@@ -3,85 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bus Ticket Payment</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            width: 350px;
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-        label {
-            font-weight: bold;
-            display: block;
-            margin-top: 10px;
-        }
-        input, select {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            width: 100%;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px;
-            margin-top: 15px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #218838;
-        }
-    </style>
+    <title>Book a Ticket - Ena Coach</title>
+    <link rel="stylesheet" href="test.css">
 </head>
 <body>
+    <header>
+        <div class="logo">
+            <img src="ena_coach-logo-removebg-preview.png" alt="Ena Coach Logo" width="150" height="150">
+        </div>
+        <h1>Book a Bus Ticket</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="booking.html">Book a Ticket</a></li>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="register.html">Register</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
 
-    <div class="container">
-        <h2>Complete Your Payment</h2>
-        <form action="process_payment.php" method="POST">
-            <label for="name">Full Name:</label>
-            <input type="text" id="name" name="name" required>
+    <!-- Restriction Message -->
+    <section class="restricted-access">
+        <h2>Access Restricted</h2>
+        <p>To access the booking dashboard, please log in or create an account.</p>
+        <a href="login.html" class="btn">Login</a>
+        <a href="login.html" class="btn">Register</a>
+    </section>
 
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
+    <footer>
+        <p>&copy; 2025 Ena Coach. All Rights Reserved.</p>
+    </footer>
 
-            <label for="phone">Phone Number:</label>
-            <input type="tel" id="phone" name="phone" placeholder="07XXXXXXXX" required>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Get current page URL
+            var currentPage = window.location.pathname.split("/").pop(); 
+            
+            // Get all navigation links
+            var navLinks = document.querySelectorAll("nav ul li a");
 
-            <label for="booking_id">Booking ID:</label>
-            <input type="text" id="booking_id" name="booking_id" value="BK123456" readonly>
-
-            <label for="bus">Bus Name & Route:</label>
-            <input type="text" id="bus" name="bus" value="Ena Coach - Nairobi to Mombasa" readonly>
-
-            <label for="fare">Total Fare (KES):</label>
-            <input type="text" id="fare" name="fare" value="1500" readonly>
-
-            <label for="mpesa_number">M-Pesa Number:</label>
-            <input type="tel" id="mpesa_number" name="mpesa_number" placeholder="Enter M-Pesa number" required>
-
-            <button type="submit">Proceed to Pay</button>
-        </form>
-    </div>
-
+            // Loop through links and check if href matches current page
+            navLinks.forEach(function (link) {
+                if (link.getAttribute("href") === currentPage) {
+                    link.classList.add("active");
+                }
+            });
+        });
+    </script>
 </body>
 </html>

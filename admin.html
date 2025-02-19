@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Bus Booking</title>
+    <link rel="stylesheet" href="admin.css">
+    <script src="admin.js" defer></script>
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <h2>Admin Panel</h2>
+        <ul id="sidebar-menu">
+            <li><a href="#" onclick="showSection('dashboard', this)">📊 Dashboard</a></li>
+            <li><a href="#" onclick="showSection('buses', this)">🚌 Manage Buses</a></li>
+            <li><a href="#" onclick="showSection('users', this)">👥 Manage Users</a></li>
+            <li><a href="#" onclick="showSection('bookings', this)">📅 Manage Bookings</a></li>
+            <li><a href="#" onclick="showSection('payments', this)">💳 Payments</a></li>
+            <li><a href="logout.html">🚪 Logout</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="section">
+            <h2>Dashboard</h2>
+            <div class="stats">
+                <div class="stat-box">🚌 <h3>Buses</h3> <p id="busCount">0</p></div>
+                <div class="stat-box">👥 <h3>Users</h3> <p id="userCount">0</p></div>
+                <div class="stat-box">📅 <h3>Bookings</h3> <p id="bookingCount">0</p></div>
+                <div class="stat-box">💰 <h3>Total Revenue</h3> <p>KES <span id="totalRevenue">0</span></p></div>
+            </div>
+        </div>
+
+        <!-- Manage Buses -->
+        <div id="buses" class="section" style="display: none;">
+            <h2>Manage Buses</h2>
+            <button class="add-btn" onclick="showModal('bus-modal')">+ Add Bus</button>
+
+            <table>
+                <thead>
+                    <tr><th>Bus Name</th><th>Route</th><th>Capacity</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="bus-list">
+                    <tr><td colspan="4">No buses added yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Manage Users -->
+        <div id="users" class="section" style="display: none;">
+            <h2>Manage Users</h2>
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="user-list">
+                    <tr><td colspan="4">No users found.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Manage Bookings -->
+        <div id="bookings" class="section" style="display: none;">
+            <h2>Manage Bookings</h2>
+            <table>
+                <thead>
+                    <tr><th>User</th><th>Bus</th><th>Seat No</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="booking-list">
+                    <tr><td colspan="5">No bookings found.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Payments Section -->
+        <div id="payments" class="section" style="display: none;">
+            <h2>Payments & Transactions</h2>
+            <table>
+                <thead>
+                    <tr><th>User</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="payment-list">
+                    <tr><td colspan="4">No payments recorded.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add Bus Modal -->
+    <div id="bus-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('bus-modal')">&times;</span>
+            <h3>Add New Bus</h3>
+            <label>Bus Name:</label>
+            <input type="text" id="bus_name">
+            <label>Route:</label>
+            <input type="text" id="route">
+            <label>Capacity:</label>
+            <input type="number" id="capacity">
+            <button onclick="addBus()">Save Bus</button>
+        </div>
+    </div>
+
+    <script>
+        function showSection(sectionId, element) {
+    // Hide all sections
+    let sections = document.querySelectorAll(".section");
+    sections.forEach(section => section.style.display = "none");
+
+    // Show the selected section
+    document.getElementById(sectionId).style.display = "block";
+
+    // Remove 'active' class from all links
+    let links = document.querySelectorAll("#sidebar-menu li a");
+    links.forEach(link => link.classList.remove("active"));
+
+    // Add 'active' class to the clicked link
+    if (element) {
+        element.classList.add("active");
+    }
+}
+
+
+function showModal(id) {
+    document.getElementById(id).style.display = "block";
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = "none";
+}
+
+function addBus() {
+    let name = document.getElementById("bus_name").value;
+    let route = document.getElementById("route").value;
+    let capacity = document.getElementById("capacity").value;
+    let table = document.getElementById("bus-list");
+
+    if (name && route && capacity) {
+        // Remove the "No buses added yet." row if it exists
+        if (table.rows.length === 1 && table.rows[0].cells.length === 1) {
+            table.innerHTML = ""; // Clears the placeholder row
+        }
+
+        // Append new bus row
+        let row = table.insertRow();
+        row.innerHTML = `<td>${name}</td><td>${route}</td><td>${capacity}</td>
+                         <td><button onclick="deleteBus(this)">Delete</button></td>`;
+
+        // Close modal after adding bus
+        closeModal('bus-modal');
+    } else {
+        alert("Please fill all fields!");
+    }
+}
+
+// Function to delete a bus row
+function deleteBus(btn) {
+    let row = btn.parentNode.parentNode;
+    let table = document.getElementById("bus-list");
+
+    row.remove(); // Remove the selected row
+
+    // If no buses remain, add the "No buses added yet." row back
+    if (table.rows.length === 0) {
+        table.innerHTML = '<tr><td colspan="4">No buses added yet.</td></tr>';
+    }
+}
+
+
+    </script>
+
+</body>
+</html>

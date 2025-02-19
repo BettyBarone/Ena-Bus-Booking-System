@@ -24,23 +24,12 @@
         </nav>
     </header>
 
-    <section class="booking-form">
-        <h2>Reserve Your Seat</h2>
-        <form action="booking.php" method="POST">
-            <label for="from">From:</label>
-            <input type="text" name="from" placeholder="Enter departure location" required>
-
-            <label for="to">To:</label>
-            <input type="text" name="to" placeholder="Enter destination" required>
-
-            <label for="date">Date of Travel:</label>
-            <input type="date" name="date" required>
-
-            <label for="seats">Number of Seats:</label>
-            <input type="number" name="seats" min="1" max="10" required>
-
-            <button type="submit">Check Availability</button>
-        </form>
+    <!-- Restriction Message -->
+    <section class="restricted-access">
+        <h2>Access Restricted</h2>
+        <p>To access the booking dashboard, please log in or create an account.</p>
+        <a href="login.html" class="btn">Login</a>
+        <a href="register.html" class="btn">Register</a>
     </section>
 
     <footer>

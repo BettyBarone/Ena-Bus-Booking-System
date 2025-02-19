@@ -1,0 +1,210 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    display: flex;
+}
+
+.sidebar {
+    width: 17%;
+    background: #2C3E50;
+    color: white;
+    padding: 20px;
+    height: 100vh;
+    position: fixed;
+}
+
+.sidebar h2 {
+    text-align: center;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 12px;
+    margin: 5px 0;
+}
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.sidebar ul li a:hover {
+    background: #007BFF;
+}
+
+/* Active tab styling */
+ul#sidebar-menu li a.active {
+    background-color: #007BFF; /* Highlight color */
+    color: white;
+    font-weight: bold;
+    border-radius: 5px;
+}
+
+.content {
+    margin-left: 25%;
+    padding: 20px;
+    width: 100%;
+}
+
+.stats {
+    display: flex;
+    gap: 4rem;
+}
+
+.stat-box {
+    background: #007BFF;
+    color: white;
+    padding: 20px;
+    width: 150px;
+    text-align: center;
+    border-radius: 5px;
+}
+
+.add-btn {
+    background: #007BFF;
+    color: white;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    margin-left: 56rem;
+}
+
+button:hover {
+    background: #0650a0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+}
+
+th {
+    background: #007BFF;
+    color: white;
+}
+
+/* Modal Styling */
+.modal {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    width: 300px;
+    margin: 100px auto;
+}
+
+.close {
+    float: right;
+    cursor: pointer;
+}
+
+
+/* Modal Background */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    justify-content: center;
+    align-items: center;
+}
+
+/* Modal Content */
+.modal-content {
+    background: white;
+    width: 40%;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    position: relative;
+    margin: 100px auto;
+}
+
+/* Close Button */
+.close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 25px;
+    cursor: pointer;
+    color: #007BFF;
+}
+
+.close:hover {
+    color: #007BFF;
+}
+
+/* Modal Title */
+.modal-content h3 {
+    color: #007BFF;
+    margin-bottom: 15px;
+}
+
+/* Labels */
+.modal-content label {
+    display: block;
+    text-align: left;
+    font-weight: bold;
+    margin: 10px 5px;
+    margin-left: 1rem;
+}
+
+/* Input Fields */
+.modal-content input {
+    width: 90%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+/* Save Button */
+.modal-content button {
+    width: 95%;
+    padding: 10px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.modal-content button:hover {
+    background-color: #cc5200;
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 80%;
+    }
+}
+

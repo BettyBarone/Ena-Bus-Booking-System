@@ -1,0 +1,37 @@
+/* Style for restricted access container */
+.restricted-access {
+    text-align: center;
+    background-color: #f8d7da; /* Light red background */
+    color: #721c24; /* Dark red text */
+    border: 1px solid #f5c6cb;
+    padding: 20px;
+    border-radius: 8px;
+    width: 50%;
+    margin: 50px auto;
+}
+
+.restricted-access h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.restricted-access p {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+/* Login Button */
+.btn {
+    display: inline-block;
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    font-size: 18px;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-right: 1rem;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
