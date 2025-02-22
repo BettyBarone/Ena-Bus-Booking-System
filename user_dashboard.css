@@ -53,8 +53,9 @@ h2 {
     color: #333;
     background-color: #ff6600;
     text-align: center;
-    margin-top: 0;
+    /* margin-top: 1rem; */
     padding: 0.5rem;
+    
 }
 
 .section {
@@ -112,7 +113,7 @@ th {
 
 .profile-container {
     background: #f8f9fa;
-    padding: 3rem;
+    padding: 2rem;
     margin-left: 15rem;
     border-radius: 5px;
     width: 50%;
@@ -125,8 +126,8 @@ th {
     margin-top: 10px;
 }
 
-.profile-info input {
-    width: 100%;
+.profile-container .profile-info input {
+    width: 95%;
     padding: 8px;
     margin: 5px 0;
     border: 1px solid #ccc;
@@ -143,7 +144,12 @@ th {
     margin-top: 1.5rem;
     font-size: inherit;
     border-radius: 5px;
-    margin-right: 2rem;
+    /* margin-right: 6rem; */
+    width: 10rem;
+}
+
+#editBtn {
+    margin-right: 13rem;
 }
 
 .profile-info button:hover {
@@ -182,6 +188,7 @@ button:hover {
 h2, h3 {
     font-size: 24px;
     color: #333;
+    border-radius: 5px;
 }
 
 /* Booking Section Styling */
@@ -208,12 +215,12 @@ th, td {
 }
 
 th {
-    background-color: #FF4500;
+    background-color: #ff6600;
     font-weight: bold;
 }
 
 button {
-    background-color: #4CAF50;
+    background-color: #ff6600;
     color: white;
     padding: 10px 20px;
     border: none;
@@ -223,12 +230,13 @@ button {
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #cc5200;
 }
 
 /* Reserve Your Seat Form Styling */
 #reserve-seat {
-    padding: 20px;
+    padding: 2rem;
+    padding-top: 0;
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -236,40 +244,43 @@ button:hover {
     margin: 20px auto;
 }
 
-form {
+#reserve-seat form {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 1rem;
 }
 
-label {
-    font-size: 16px;
+#reserve-seat label {
+    font-size: 1rem;
     font-weight: bold;
     color: #333;
 }
 
-select, input[type="date"], button {
+#reserve-seat select, input[type="date"], button {
     padding: 10px;
     font-size: 16px;
     border: 1px solid #ddd;
     border-radius: 5px;
-    width: 100%;
+    width: 99%;
 }
 
-input[type="date"] {
+#reserve-seat input[type="date"] {
     cursor: pointer;
+    width: 95.5%;
 }
 
-button[type="submit"] {
-    background-color: #007bff;
+#reserve-seat button[type="submit"] {
+    background-color: #ff6600;
     border: none;
     color: white;
     font-size: 16px;
     cursor: pointer;
+    width: 99%;
+    margin-top: 2rem;
 }
 
-button[type="submit"]:hover {
-    background-color: #0056b3;
+#reserve-seat  button[type="submit"]:hover {
+    background-color: #cc5200;
 }
 
 #confirmation {
@@ -284,18 +295,19 @@ button[type="submit"]:hover {
 
 /* Back Button Styling */
 #backToBooking {
-    background-color: #f44336;
+    background-color: #ff6600;
     color: white;
-    font-size: 14px;
+    font-size: 16px;
     border: none;
     padding: 10px 20px;
     cursor: pointer;
     border-radius: 5px;
     margin-top: 20px;
+    width: 10rem;
 }
 
 #backToBooking:hover {
-    background-color: #e53935;
+    background-color: #cc5200;
 }
 
 /* Responsive design for mobile */
@@ -319,7 +331,8 @@ button[type="submit"]:hover {
 
 /* Payment Section Styling */
 #payment {
-    padding: 20px;
+    /* padding: 20px; */
+    padding-top: 0;
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -327,43 +340,49 @@ button[type="submit"]:hover {
     margin: 20px auto;
 }
 
-form {
+#payment form {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 1rem;
 }
 
-label {
+#payment label {
     font-size: 16px;
     font-weight: bold;
     color: #333;
+    margin-left: 2rem;
+    margin-top: 0.5rem;
 }
 
-input[type="text"], input[type="email"], input[type="tel"] {
+#payment input[type="text"], #payment input[type="email"], #payment input[type="tel"] {
     padding: 10px;
     font-size: 16px;
     border: 1px solid #ddd;
     border-radius: 5px;
-    width: 100%;
+    width: 87%;
+    margin-left: 2rem;
 }
 
-input[type="tel"] {
+#payment input[type="tel"] {
     cursor: pointer;
 }
 
-button[type="submit"] {
-    background-color: #007bff;
+#payment button[type="submit"] {
+    background-color: #ff6600;
     border: none;
     color: white;
     font-size: 16px;
     cursor: pointer;
     padding: 12px 20px;
     border-radius: 5px;
-    width: 100%;
+    width: 91%;
+    margin-left: 2rem;
+    margin-top: 1rem;
+    margin-bottom: 2.5rem;
 }
 
-button[type="submit"]:hover {
-    background-color: #0056b3;
+#payment button[type="submit"]:hover {
+    background-color: #cc5200;
 }
 
 /* Responsive design for mobile */

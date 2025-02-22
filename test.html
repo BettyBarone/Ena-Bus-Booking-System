@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book a Ticket - Ena Coach</title>
+    <title>Login - Ena Coach</title>
     <link rel="stylesheet" href="test.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <header>
         <div class="logo">
             <img src="ena_coach-logo-removebg-preview.png" alt="Ena Coach Logo" width="150" height="150">
         </div>
-        <h1>Book a Bus Ticket</h1>
+        <h1>Login to Ena Coach</h1>
         <nav>
             <ul>
                 <li><a href="index.html">Home</a></li>
@@ -23,12 +24,50 @@
         </nav>
     </header>
 
-    <!-- Restriction Message -->
-    <section class="restricted-access">
-        <h2>Access Restricted</h2>
-        <p>To access the booking dashboard, please log in or create an account.</p>
-        <a href="login.html" class="btn">Login</a>
-        <a href="login.html" class="btn">Register</a>
+    <section class="login-container">
+        <!-- Tab Navigation -->
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'user-login')">User Login</button>
+            <button class="tablinks" onclick="openTab(event, 'admin-login')">Admin Login</button>
+        </div>
+
+        <!-- User Login Form -->
+        <div id="user-login" class="tabcontent active">
+            <h2>User Login</h2>
+            <form action="user_login.php" method="POST">
+                <label for="email">Email:</label>
+                <input type="email" name="email" placeholder="Enter your email" required>
+
+                <label for="password">Password:</label>
+                <div class="password-container">
+                    <input type="password" id="password-user" name="password" placeholder="Enter your password" required>
+                    <span class="toggle-icon" onclick="togglePassword('password-user', 'eyeIcon-user')">
+                        <i id="eyeIcon-user" class="fas fa-eye"></i> 
+                    </span>
+                </div>
+
+                <button type="submit">Login as User</button>
+            </form>
+        </div>
+
+        <!-- Admin Login Form -->
+        <div id="admin-login" class="tabcontent">
+            <h2>Admin Login</h2>
+            <form action="admin_login.php" method="POST">
+                <label for="admin-email">Admin Email:</label>
+                <input type="email" name="admin-email" placeholder="Enter admin email" required>
+
+                <label for="admin-password">Password:</label>
+                <div class="password-container">
+                    <input type="password" id="password-admin" name="admin-password" placeholder="Enter admin password" required>
+                    <span class="toggle-icon" onclick="togglePassword('password-admin', 'eyeIcon-admin')">
+                        <i id="eyeIcon-admin" class="fas fa-eye"></i> 
+                    </span>
+                </div>
+
+                <button type="submit">Login as Admin</button>
+            </form>
+        </div>
     </section>
 
     <footer>
@@ -36,19 +75,39 @@
     </footer>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Get current page URL
-            var currentPage = window.location.pathname.split("/").pop(); 
-            
-            // Get all navigation links
-            var navLinks = document.querySelectorAll("nav ul li a");
+        function openTab(event, tabName) {
+            // Hide all tab contents
+            let tabcontent = document.querySelectorAll(".tabcontent");
+            tabcontent.forEach(content => content.style.display = "none");
 
-            // Loop through links and check if href matches current page
-            navLinks.forEach(function (link) {
-                if (link.getAttribute("href") === currentPage) {
-                    link.classList.add("active");
-                }
-            });
+            // Remove active class from all tabs
+            let tablinks = document.querySelectorAll(".tablinks");
+            tablinks.forEach(link => link.classList.remove("active"));
+
+            // Show the selected tab
+            document.getElementById(tabName).style.display = "block";
+            event.currentTarget.classList.add("active");
+        }
+
+        function togglePassword(inputId, eyeId) {
+            let passwordField = document.getElementById(inputId);
+            let eyeIcon = document.getElementById(eyeId);
+
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                eyeIcon.classList.remove("fa-eye");
+                eyeIcon.classList.add("fa-eye-slash");
+            } else {
+                passwordField.type = "password";
+                eyeIcon.classList.remove("fa-eye-slash");
+                eyeIcon.classList.add("fa-eye");
+            }
+        }
+
+        // Set the default active tab on page load
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("user-login").style.display = "block";
+            document.getElementById("admin-login").style.display = "none";
         });
     </script>
 </body>

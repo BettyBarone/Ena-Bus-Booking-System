@@ -15,7 +15,6 @@
             <li><a href="#" onclick="showSection('profile')">Profile</a></li>
             <li><a href="#" onclick="showSection('booking')">Booking</a></li>
             <li><a href="#" onclick="showSection('payment')">Payment</a></li>
-            <li><a href="/admin-panel">Admin Panel</a></li>
             <li><a href="/logout">Logout</a></li>
         </ul>
     </div>
@@ -87,7 +86,7 @@
                     <label>Password:</label>
                     <input type="password" id="password" value="********" disabled>
         
-                    <button onclick="enableEditing()">Edit Profile</button>
+                    <button onclick="enableEditing()" id="editBtn">Edit Profile</button>
                     <button onclick="saveProfile()" id="saveBtn" style="display: none;">Save Changes</button>
                 </div>
             </div>
@@ -139,6 +138,8 @@
         
         <!-- Reserve Your Seat Form (hidden by default) -->
         <div id="reserve-seat" class="section" style="display: none;">
+            <!-- Back Button -->
+            <button id="backToBooking" onclick="backToBooking()">Back to Booking</button>
             <h2>Reserve Your Seat</h2>
             <p>Select a bus and seat from the available options below.</p>
         
@@ -162,8 +163,7 @@
                 <button type="submit">Reserve Seat</button>
             </form>
         
-            <!-- Back Button -->
-            <button id="backToBooking" onclick="backToBooking()">Back to Booking</button>
+            
         
             <div id="confirmation" style="display: none;">
                 <p>Your seat has been reserved! Thank you for choosing us.</p>
