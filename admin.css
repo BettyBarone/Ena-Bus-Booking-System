@@ -48,14 +48,14 @@ ul#sidebar-menu li a.active {
 }
 
 .content {
-    margin-left: 25%;
+    margin-left: 22%;
     padding: 20px;
-    width: 100%;
+    width: 80%;
 }
 
 .stats {
     display: flex;
-    gap: 4rem;
+    gap: 3rem;
 }
 
 .stat-box {
@@ -73,7 +73,7 @@ ul#sidebar-menu li a.active {
     padding: 10px;
     border: none;
     cursor: pointer;
-    margin-left: 56rem;
+    margin-left: 52rem;
 }
 
 button:hover {
@@ -96,6 +96,9 @@ th {
     color: white;
 }
 
+td {
+    text-align: center;
+}
 /* Modal Styling */
 .modal {
     display: none;

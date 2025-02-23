@@ -5,18 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Dashboard</title>
     <link rel="stylesheet" href="user_dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
 </head>
 <body>
 
     <div class="sidebar">
-        <h2>User Panel</h2>
-        <ul>
-            <li><a href="#" onclick="showSection('dashboard')">Dashboard</a></li>
-            <li><a href="#" onclick="showSection('profile')">Profile</a></li>
-            <li><a href="#" onclick="showSection('booking')">Booking</a></li>
-            <li><a href="#" onclick="showSection('payment')">Payment</a></li>
-            <li><a href="/logout">Logout</a></li>
+        <div class="logo">
+            <img src="ena_coach-logo-removebg-preview.png" alt="Ena Coach Logo" width="100" height="100">
+            <h2>User Panel</h2>
+        </div>
+        
+        <ul id="nav-menu" class="sidebar_list">
+            <li><a href="#" onclick="showSection('dashboard', this)"><i class="fa fa-chart-bar"></i> Dashboard</a></li>
+            <li><a href="#" onclick="showSection('profile', this)"><i class="fa fa-user"></i> Profile</a></li>
+            <li><a href="#" onclick="showSection('booking', this)"><i class="fa fa-ticket-alt"></i> Booking</a></li>
+            <li><a href="#" onclick="showSection('payment', this)"><i class="fa fa-credit-card"></i> Payment</a></li>
+            <li><a href="/logout"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
         </ul>
+        
     </div>
 
     <div class="content">
@@ -42,16 +49,18 @@
             <h3>Recent Bookings</h3>
             <table>
                 <tr>
-                    <th>Bus Name</th>
+                    <th>Bus Number</th>  <!-- Changed from Bus Name -->
                     <th>Route</th>
+                    <th>Departure Time</th> <!-- Added for more details -->
                     <th>Date</th>
                     <th>Seat No</th>
                     <th>Status</th>
                 </tr>
                 <tbody id="recentBookings">
-                    <tr><td colspan="5">No bookings available.</td></tr>
+                    <tr><td colspan="6">No bookings available.</td></tr>
                 </tbody>
             </table>
+
         
             <h3>Recent Payments</h3>
             <table>
@@ -92,12 +101,7 @@
             </div>
         </div>
         
-
-        <!-- <div id="booking" class="section" style="display: none;">
-            <h2>Booking</h2>
-            <p>View and manage your bus bookings.</p>
-        </div> -->
-        <div id="booking" class="section" style="display: block;">
+        <div id="booking" class="section booking" style="display: none;">
             <h2>Booking</h2>
             <p>View and manage your bus bookings here.</p>
         
@@ -106,7 +110,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Bus Name</th>
+                        <th>Bus Number</th>
                         <th>Route</th>
                         <th>Departure Time</th>
                         <th>Available Seats</th>
@@ -123,7 +127,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Bus Name</th>
+                        <th>Bus Number</th>
                         <th>Route</th>
                         <th>Seat Number</th>
                         <th>Status</th>
@@ -139,7 +143,7 @@
         <!-- Reserve Your Seat Form (hidden by default) -->
         <div id="reserve-seat" class="section" style="display: none;">
             <!-- Back Button -->
-            <button id="backToBooking" onclick="backToBooking()">Back to Booking</button>
+            <button id="backToBooking" onclick="backToBooking()"><i class="fa fa-chevron-left"></i>Back to Booking</button>
             <h2>Reserve Your Seat</h2>
             <p>Select a bus and seat from the available options below.</p>
         
@@ -171,7 +175,7 @@
         </div>
         
 
-        <div id="payment" class="section" style="display: block;">
+        <div id="payment" class="section" style="display: none;">
             <h2>Complete Your Payment</h2>
         
             <!-- Payment Form -->
@@ -204,16 +208,34 @@
     </div>
 
     <script>
-        function showSection(section) {
-    let sections = document.querySelectorAll('.section');
-    sections.forEach(sec => sec.style.display = "none");
+        
 
-    document.getElementById(section).style.display = "block";
-}
+        document.addEventListener("DOMContentLoaded", function () {
+    // Set default active section to Dashboard
+    let defaultSection = "dashboard";
+    let defaultLink = document.querySelector(`#nav-menu li a[href="#"][onclick*="${defaultSection}"]`);
 
-// Show Dashboard by default
-document.addEventListener("DOMContentLoaded", function () {
-    showSection('dashboard');
+    if (defaultLink) {
+        defaultLink.classList.add("active"); // Add active class to Dashboard link
+        document.getElementById(defaultSection).style.display = "block"; // Show Dashboard section
+    }
+
+    // Function to switch active section
+    window.showSection = function (section, element) {
+        // Hide all sections
+        let sections = document.querySelectorAll(".section");
+        sections.forEach(sec => sec.style.display = "none");
+
+        // Show selected section
+        document.getElementById(section).style.display = "block";
+
+        // Remove "active" class from all links
+        let navLinks = document.querySelectorAll("#nav-menu li a");
+        navLinks.forEach(link => link.classList.remove("active"));
+
+        // Add "active" class to the clicked link
+        element.classList.add("active");
+    };
 });
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -224,9 +246,9 @@ document.addEventListener("DOMContentLoaded", function () {
         upcomingTrips: 2,
         totalPayments: 4500,
         recentBookings: [
-            { bus: "Ena Coach Express", route: "Nairobi - Kisumu", date: "2025-02-20", seat: "12A", status: "Confirmed" },
-            { bus: "Modern Coast", route: "Nairobi - Mombasa", date: "2025-03-01", seat: "5C", status: "Pending" }
-        ],
+    { busNumber: "001", route: "Nairobi - Kisumu", departureTime: "08:00 AM", date: "2025-02-20", seat: "12A", status: "Confirmed" },
+    { busNumber: "002", route: "Nairobi - Eldoret", departureTime: "02:30 PM", date: "2025-02-22", seat: "7B", status: "Pending" }
+],
         recentPayments: [
             { amount: "Ksh 2000", transactionId: "MPESA123456", status: "Completed", date: "2025-02-10" },
             { amount: "Ksh 2500", transactionId: "MPESA654321", status: "Pending", date: "2025-02-12" }
@@ -242,8 +264,9 @@ document.addEventListener("DOMContentLoaded", function () {
     bookingsTable.innerHTML = "";
     userData.recentBookings.forEach(booking => {
         let row = `<tr>
-            <td>${booking.bus}</td>
+            <td>${booking.busNumber}</td>
             <td>${booking.route}</td>
+            <td>${booking.departureTime}</td>
             <td>${booking.date}</td>
             <td>${booking.seat}</td>
             <td>${booking.status}</td>
@@ -294,8 +317,8 @@ function saveProfile() {
 document.addEventListener("DOMContentLoaded", function () {
     // Simulate available buses and seats data
     let buses = [
-        { bus: "Ena Coach Express", route: "Nairobi - Kisumu", seats: ["1A", "1B", "1C", "2A", "2B"] },
-        { bus: "Modern Coast", route: "Nairobi - Mombasa", seats: ["1A", "1B", "2A", "2C"] }
+        { busNumber: "004", route: "Nairobi - Kisumu", seats: ["1A", "1B", "1C", "2A", "2B"] },
+        { busNumber: "006", route: "Nairobi - Mombasa", seats: ["1A", "1B", "2A", "2C"] }
     ];
 
     // Populate the available buses table with "Book Now" buttons
@@ -303,7 +326,7 @@ document.addEventListener("DOMContentLoaded", function () {
     availableTable.innerHTML = "";
     buses.forEach(bus => {
         let row = `<tr>
-            <td>${bus.bus}</td>
+            <td>${bus.busNumber}</td>
             <td>${bus.route}</td>
             <td>2025-02-20 07:00 AM</td> <!-- Simulated time -->
             <td>${bus.seats.length}</td>
