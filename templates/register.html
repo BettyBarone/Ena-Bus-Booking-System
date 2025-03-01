@@ -1,71 +1,55 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Ena Coach</title>
-    <link rel="stylesheet" href="register.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-</head>
-<body>
-    <header>
+{% extends 'base.html' %}
 
-        <div class="logo">
-            <img src="ena_coach-logo-removebg-preview.png" alt="Ena Coach Logo" width="150" height="150">
+{% load static %}
+
+{% block title %}Register - Ena Coach{% endblock %}
+
+{% block other_styles %}
+<link rel="stylesheet" href="{% static 'assets/css/register.css' %}">
+{% endblock %}
+
+{% block header_title %}Create an Account{% endblock %}
+
+{% block content %}
+<section class="register-form">
+    <h2>Sign Up</h2>
+    <form action="register.php" method="POST">
+        <label for="name">Full Name:</label>
+        <input type="text" name="name" placeholder="Enter your full name" required>
+
+        <label for="email">Email:</label>
+        <input type="email" name="email" placeholder="Enter your email" required>
+
+        <label for="phone">Phone Number:</label>
+        <input type="text" name="phone" placeholder="Enter your phone number" required>
+
+        <label for="password">Password:</label>
+        <!-- <input type="password" name="password" placeholder="Enter your password" required>
+-->
+        <div class="password-container">
+            <input type="password" id="password" placeholder="Enter your password">
+            <span class="toggle-icon" onclick="togglePassword()">
+                <i id="eyeIcon" class="fas fa-eye"></i> 
+            </span>
         </div>
-        <h1>Create an Account</h1>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="booking.html">Book a Ticket</a></li>
-                <li><a href="login.html">Login</a></li>
-                <li><a href="register.html">Register</a></li>
-                <li><a href="contact.html">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
 
-    <section class="register-form">
-        <h2>Sign Up</h2>
-        <form action="register.php" method="POST">
-            <label for="name">Full Name:</label>
-            <input type="text" name="name" placeholder="Enter your full name" required>
+        <label for="password2">Confirm Password:</label>
+       
+        <div class="password-container2">
+            <input type="password" id="password2" placeholder="Confirm your password">
+            <span class="toggle-icon2" onclick="togglePassword2()">
+                <i id="eyeIcon2" class="fas fa-eye"></i> 
+            </span>
+        </div>
+        <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="login.html">Login here</a></p>
+</section>
+{% endblock %}
 
-            <label for="email">Email:</label>
-            <input type="email" name="email" placeholder="Enter your email" required>
-
-            <label for="phone">Phone Number:</label>
-            <input type="text" name="phone" placeholder="Enter your phone number" required>
-
-            <label for="password">Password:</label>
-            <!-- <input type="password" name="password" placeholder="Enter your password" required>
- -->
-            <div class="password-container">
-                <input type="password" id="password" placeholder="Enter your password">
-                <span class="toggle-icon" onclick="togglePassword()">
-                    <i id="eyeIcon" class="fas fa-eye"></i> 
-                </span>
-            </div>
-
-            <label for="password2">Confirm Password:</label>
-           
-            <div class="password-container2">
-                <input type="password" id="password2" placeholder="Confirm your password">
-                <span class="toggle-icon2" onclick="togglePassword2()">
-                    <i id="eyeIcon2" class="fas fa-eye"></i> 
-                </span>
-            </div>
-            <button type="submit">Register</button>
-        </form>
-        <p>Already have an account? <a href="login.html">Login here</a></p>
-    </section>
-
-    <footer>
-        <p>&copy; 2025 Ena Coach. All Rights Reserved.</p>
-    </footer>
-
-    <script>
-        function togglePassword() {
+{% block other_scripts %}
+<script>
+    function togglePassword() {
             var passwordField = document.getElementById("password");
             var eyeIcon = document.getElementById("eyeIcon");
     
@@ -97,20 +81,6 @@
             }
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
-        // Get current page URL
-        var currentPage = window.location.pathname.split("/").pop(); 
-        
-        // Get all navigation links
-        var navLinks = document.querySelectorAll("nav ul li a");
+</script>
+{% endblock %}
 
-        // Loop through links and check if href matches current page
-        navLinks.forEach(function (link) {
-            if (link.getAttribute("href") === currentPage) {
-                link.classList.add("active");
-            }
-        });
-    });
-    </script>
-</body>
-</html>

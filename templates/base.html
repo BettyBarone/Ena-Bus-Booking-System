@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ena Coach{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'assets/css/styles.css' %}">
+    {% block other_styles %}{% endblock %}
+    <link rel="icon" type="image/png" href="{% static 'assets/images/ena_coach-logo-removebg-preview.png' %}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="{% static 'assets/images/ena_coach-logo-removebg-preview.png' %}" alt="Ena Coach Logo" width="150" height="150">
+        </div>
+        <h1>{% block header_title %}Welcome to Ena Coach{% endblock %}</h1>
+        <nav>
+            <ul>
+                <li><a href="{% url 'index' %}" class="{% if request.path == '/' or request.path == '/index/' %}active{% endif %}">Home</a></li>
+                <li><a href="{% url 'booking' %}" class="{% if request.path == '/booking/' %}active{% endif %}">Book a Ticket</a></li>
+                <li><a href="{% url 'login' %}" class="{% if request.path == '/login/' %}active{% endif %}">Login</a></li>
+                <li><a href="{% url 'register' %}" class="{% if request.path == '/register/' %}active{% endif %}">Register</a></li>
+                <li><a href="{% url 'contact' %}" class="{% if request.path == '/contact/' %}active{% endif %}">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Ena Coach. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+         document.addEventListener("DOMContentLoaded", function () {
+    var currentPage = window.location.pathname;
+    var navLinks = document.querySelectorAll("nav ul li a");
+
+    navLinks.forEach(function (link) {
+        var linkPath = new URL(link.href, window.location.origin).pathname;
+
+        if ((currentPage === "/" || currentPage === "/index/") && linkPath === "/") {
+            link.classList.add("active");
+        } 
+        else if (linkPath === currentPage) {
+            link.classList.add("active");
+        }
+    });
+});
+    </script>
+
+{% block other_scripts %}{% endblock %}
+
+</body>
+</html>

@@ -1,73 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Us - Ena Coach</title>
-    <link rel="stylesheet" href="contact.css">
-</head>
-<body>
-    <header>
+{% extends 'base.html' %}
 
-        <div class="logo">
-            <img src="ena_coach-logo-removebg-preview.png" alt="Ena Coach Logo" width="150" height="150">
-        </div>
-        <h1>Contact Ena Coach</h1>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="booking.html">Book a Ticket</a></li>
-                <li><a href="login.html">Login</a></li>
-                <li><a href="register.html">Register</a></li>
-                <li><a href="contact.html">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
+{% load static %}
 
-    <section class="contact-form">
-        <h2>Get in Touch</h2>
-        <p>If you have any questions, feel free to contact us using the form below.</p>
-        
-        <form action="contact.php" method="POST">
-            <label for="name">Your Name:</label>
-            <input type="text" name="name" placeholder="Enter your name" required>
+{% block title %}Contact Us - Ena Coach{% endblock %}
 
-            <label for="email">Your Email:</label>
-            <input type="email" name="email" placeholder="Enter your email" required>
+{% block other_styles %}
+<link rel="stylesheet" href="{% static 'assets/css/contact.css' %}">
+{% endblock %}
 
-            <label for="message">Your Message:</label>
-            <textarea name="message" rows="5" placeholder="Enter your message" required></textarea>
+{% block header_title %}Contact Ena Coach{% endblock %}
 
-            <button type="submit">Send Message</button>
-        </form>
+{% block content %}
+<section class="contact-form">
+    <h2>Get in Touch</h2>
+    <p>If you have any questions, feel free to contact us using the form below.</p>
+    
+    <form action="contact.php" method="POST">
+        <label for="name">Your Name:</label>
+        <input type="text" name="name" placeholder="Enter your name" required>
 
-        <h3>Our Contact Details</h3>
-        <p><strong>Email:</strong> support@enacoach.com</p>
-        <p><strong>Phone:</strong> +254 700 123 456</p>
-        <p><strong>Address:</strong> Nairobi, Kenya</p>
-        
-        
-    </section>
+        <label for="email">Your Email:</label>
+        <input type="email" name="email" placeholder="Enter your email" required>
 
-    <footer>
-        <p>&copy; 2025 Ena Coach. All Rights Reserved.</p>
-    </footer>
+        <label for="message">Your Message:</label>
+        <textarea name="message" rows="5" placeholder="Enter your message" required></textarea>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-        // Get current page URL
-        var currentPage = window.location.pathname.split("/").pop(); 
-        
-        // Get all navigation links
-        var navLinks = document.querySelectorAll("nav ul li a");
+        <button type="submit">Send Message</button>
+    </form>
 
-        // Loop through links and check if href matches current page
-        navLinks.forEach(function (link) {
-            if (link.getAttribute("href") === currentPage) {
-                link.classList.add("active");
-            }
-        });
-    });
-    </script>
-</body>
-</html>
+    <h3>Our Contact Details</h3>
+    <p><strong>Email:</strong> support@enacoach.com</p>
+    <p><strong>Phone:</strong> +254 700 123 456</p>
+    <p><strong>Address:</strong> Nairobi, Kenya</p>
+    
+    
+</section>
+{% endblock %}
+
+{% block other_scripts %}{% endblock %}
+

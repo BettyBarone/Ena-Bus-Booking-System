@@ -1,56 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book a Ticket - Ena Coach</title>
-    <link rel="stylesheet" href="booking.css">
-</head>
-<body>
-    <header>
+{% extends 'base.html' %}
 
-        <div class="logo">
-            <img src="ena_coach-logo-removebg-preview.png" alt="Ena Coach Logo" width="150" height="150">
-        </div>
-        <h1>Book a Bus Ticket</h1>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="booking.html">Book a Ticket</a></li>
-                <li><a href="login.html">Login</a></li>
-                <li><a href="register.html">Register</a></li>
-                <li><a href="contact.html">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
+{% load static %}
 
-    <!-- Restriction Message -->
-    <section class="restricted-access">
-        <h2>Access Restricted</h2>
-        <p>To access the booking dashboard, please log in or create an account.</p>
-        <a href="login.html" class="btn">Login</a>
-        <a href="register.html" class="btn">Register</a>
-    </section>
+{% block title %}Book a Ticket - Ena Coach{% endblock %}
 
-    <footer>
-        <p>&copy; 2025 Ena Coach. All Rights Reserved.</p>
-    </footer>
+{% block other_styles %}
+<link rel="stylesheet" href="{% static 'assets/css/booking.css' %}">
+{% endblock %}
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-        // Get current page URL
-        var currentPage = window.location.pathname.split("/").pop(); 
-        
-        // Get all navigation links
-        var navLinks = document.querySelectorAll("nav ul li a");
+{% block header_title %}Book a Bus Ticket{% endblock %}
 
-        // Loop through links and check if href matches current page
-        navLinks.forEach(function (link) {
-            if (link.getAttribute("href") === currentPage) {
-                link.classList.add("active");
-            }
-        });
-    });
-    </script>
-</body>
-</html>
+{% block content %}
+<!-- Restriction Message -->
+<section class="restricted-access">
+    <h2>Access Restricted</h2>
+    <p>To access the booking dashboard, please log in or create an account.</p>
+    <a href="{% url 'login' %}" class="btn">Login</a>
+    <a href="{% url 'register' %}" class="btn">Register</a>
+</section>
+{% endblock %}
+
+{% block other_scripts %}{% endblock %}
