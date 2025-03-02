@@ -1,18 +1,19 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Dashboard</title>
-    <link rel="stylesheet" href="user_dashboard.css">
+    <link rel="stylesheet" href="{% static 'assets/css/user_dash.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+    <link rel="icon" type="image/png" href="{% static 'assets/images/ena_coach-logo-removebg-preview.png' %}">
 </head>
 <body>
 
     <div class="sidebar">
         <div class="logo">
-            <img src="ena_coach-logo-removebg-preview.png" alt="Ena Coach Logo" width="100" height="100">
+            <img src="{% static 'assets/images/ena_coach-logo-removebg-preview.png' %}" alt="Ena Coach Logo" width="120" height="120">
             <h2>User Panel</h2>
         </div>
         
@@ -141,7 +142,7 @@
         </div>
         
         <!-- Reserve Your Seat Form (hidden by default) -->
-        <div id="reserve-seat" class="section" style="display: none;">
+        <div id="reserve-seat" class="section reserve-seat" style="display: none;">
             <!-- Back Button -->
             <button id="backToBooking" onclick="backToBooking()"><i class="fa fa-chevron-left"></i>Back to Booking</button>
             <h2>Reserve Your Seat</h2>

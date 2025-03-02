@@ -129,3 +129,9 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Redirect users to the correct login page when authentication is required
+LOGIN_URL = '/admin_login/' 
+
+AUTH_USER_MODEL = 'enaapp.CustomUser'
+
