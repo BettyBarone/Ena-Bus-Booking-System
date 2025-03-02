@@ -1,10 +1,11 @@
-<!DOCTYPE html>
+{% load static %}
+!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Bus Booking</title>
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="{% static 'assets/css/admin_dash.css' %}">
     <script src="admin.js" defer></script>
 </head>
 <body>
@@ -13,12 +14,12 @@
     <div class="sidebar">
         <h2>Admin Panel</h2>
         <ul id="sidebar-menu">
-            <li><a href="#" onclick="showSection('dashboard', this)">📊 Dashboard</a></li>
-            <li><a href="#" onclick="showSection('buses', this)">🚌 Manage Buses</a></li>
-            <li><a href="#" onclick="showSection('users', this)">👥 Manage Users</a></li>
-            <li><a href="#" onclick="showSection('bookings', this)">📅 Manage Bookings</a></li>
-            <li><a href="#" onclick="showSection('payments', this)">💳 Payments</a></li>
-            <li><a href="logout.html">🚪 Logout</a></li>
+            <li><a href="#" onclick="showSection('dashboard', this)">📊&nbsp; Dashboard</a></li>
+            <li><a href="#" onclick="showSection('buses', this)">🚌 &nbsp;Manage Buses</a></li>
+            <li><a href="#" onclick="showSection('users', this)">👥 &nbsp; Manage Users</a></li>
+            <li><a href="#" onclick="showSection('bookings', this)">📅 &nbsp;Manage Bookings</a></li>
+            <li><a href="#" onclick="showSection('payments', this)">💳 &nbsp;Payments</a></li>
+            <li><a href="{% url 'admin_logout' %}" onclick="return confirmLogout()">🚪 &nbsp; Logout</a></li>
         </ul>
     </div>
 
@@ -54,6 +55,8 @@
         <!-- Manage Users -->
         <div id="users" class="section" style="display: none;">
             <h2>Manage Users</h2>
+            <button class="add-btn" onclick="showModal('user-modal')">+ Add User</button>
+
             <table>
                 <thead>
                     <tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr>
@@ -63,6 +66,25 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Add User Modal -->
+        <div id="user-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('user-modal')">&times;</span>
+                <h3>Add New User</h3>
+                <label>Full Name:</label>
+                <input type="text" id="user_name">
+                <label>Email:</label>
+                <input type="email" id="user_email">
+                <label>Role:</label>
+                <select id="user_role">
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                </select>
+                <button onclick="addUser()">Save User</button>
+            </div>
+        </div>
+
 
         <!-- Manage Bookings -->
         <div id="bookings" class="section" style="display: none;">
@@ -119,10 +141,26 @@
     let links = document.querySelectorAll("#sidebar-menu li a");
     links.forEach(link => link.classList.remove("active"));
 
-    // Add 'active' class to the clicked link
+    // Add 'active' class to the clicked link, but only if an element is provided
     if (element) {
         element.classList.add("active");
+        localStorage.setItem("activeSection", sectionId); // Store active section
     }
+}
+
+// Ensure Dashboard is selected by default on page load
+document.addEventListener("DOMContentLoaded", function() {
+    let savedSection = localStorage.getItem("activeSection");
+
+    if (savedSection) {
+        showSection(savedSection, document.querySelector(`#sidebar-menu a[href="#"][onclick*="${savedSection}"]`));
+    } else {
+        showSection("dashboard", document.querySelector("#sidebar-menu li a:first-child"));
+    }
+});
+
+function confirmLogout() {
+    return confirm("Are you sure you want to log out?");
 }
 
 
@@ -171,6 +209,43 @@ function deleteBus(btn) {
     }
 }
 
+
+function addUser() {
+    let name = document.getElementById("user_name").value;
+    let email = document.getElementById("user_email").value;
+    let role = document.getElementById("user_role").value;
+    let table = document.getElementById("user-list");
+
+    if (name && email && role) {
+        // Remove placeholder row if it exists
+        if (table.rows.length === 1 && table.rows[0].cells.length === 1) {
+            table.innerHTML = ""; // Clear placeholder row
+        }
+
+        // Append new user row
+        let row = table.insertRow();
+        row.innerHTML = `<td>${name}</td><td>${email}</td><td>${role}</td>
+                         <td><button onclick="deleteUser(this)">Delete</button></td>`;
+
+        // Close modal after adding user
+        closeModal('user-modal');
+    } else {
+        alert("Please fill all fields!");
+    }
+}
+
+// Function to delete a user row
+function deleteUser(btn) {
+    let row = btn.parentNode.parentNode;
+    let table = document.getElementById("user-list");
+
+    row.remove(); // Remove the selected row
+
+    // If no users remain, add the placeholder row
+    if (table.rows.length === 0) {
+        table.innerHTML = '<tr><td colspan="4">No users found.</td></tr>';
+    }
+}
 
     </script>
 

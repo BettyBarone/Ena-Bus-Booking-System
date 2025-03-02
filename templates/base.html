@@ -20,7 +20,7 @@
             <ul>
                 <li><a href="{% url 'index' %}" class="{% if request.path == '/' or request.path == '/index/' %}active{% endif %}">Home</a></li>
                 <li><a href="{% url 'booking' %}" class="{% if request.path == '/booking/' %}active{% endif %}">Book a Ticket</a></li>
-                <li><a href="{% url 'login' %}" class="{% if request.path == '/login/' %}active{% endif %}">Login</a></li>
+                <li><a href="{% url 'user_login' %}" class="{% if request.path == '/user_login/' or request.path == '/admin_login/' %}active{% endif %}">Login</a></li>
                 <li><a href="{% url 'register' %}" class="{% if request.path == '/register/' %}active{% endif %}">Register</a></li>
                 <li><a href="{% url 'contact' %}" class="{% if request.path == '/contact/' %}active{% endif %}">Contact</a></li>
             </ul>

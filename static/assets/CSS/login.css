@@ -12,6 +12,11 @@ h2 {
     text-align: center;
 }
 
+.error-message {
+    color: #ff6600;
+    
+}
+
 /* Tab Navigation */
 .tab {
     margin-top: 1rem;
@@ -24,7 +29,7 @@ h2 {
     background-color: #ff6600;
     border: none;
     color: white;
-    padding: 1rem 2rem;
+    padding: 1rem 2.9rem;
     cursor: pointer;
     font-size: 1rem;
     font-weight: bold;

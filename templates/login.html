@@ -40,10 +40,17 @@
     <!-- Admin Login Form -->
     <div id="admin-login" class="tabcontent">
         <h2>Admin Login</h2>
-        <form action="admin_login.php" method="POST">
+        {% if messages %}
+            {% for message in messages %}
+                <p class="error-message">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+
+        <form action="{% url 'admin_login' %}" method="POST" onsubmit="disableLoginButton()">
+            {% csrf_token %}
             <label for="admin-email">Admin Email:</label>
             <input type="email" name="admin-email" placeholder="Enter admin email" required>
-
+        
             <label for="admin-password">Password:</label>
             <div class="password-container">
                 <input type="password" id="password-admin" name="admin-password" placeholder="Enter admin password" required>
@@ -51,9 +58,10 @@
                     <i id="eyeIcon-admin" class="fas fa-eye"></i> 
                 </span>
             </div>
-
-            <button type="submit">Login as Admin</button>
+        
+            <button type="submit" id="adminLoginButton">Login as Admin</button>
         </form>
+        
     </div>
 </section>
 {% endblock %}
@@ -61,39 +69,57 @@
 {% block other_scripts %}
 <script>
     function openTab(event, tabName) {
-        // Hide all tab contents
-        let tabcontent = document.querySelectorAll(".tabcontent");
-        tabcontent.forEach(content => content.style.display = "none");
+    // Hide all tab contents
+    let tabcontent = document.querySelectorAll(".tabcontent");
+    tabcontent.forEach(content => content.style.display = "none");
 
-        // Remove active class from all tabs
-        let tablinks = document.querySelectorAll(".tablinks");
-        tablinks.forEach(link => link.classList.remove("active"));
+    // Remove active class from all tabs
+    let tablinks = document.querySelectorAll(".tablinks");
+    tablinks.forEach(link => link.classList.remove("active"));
 
-        // Show the selected tab
-        document.getElementById(tabName).style.display = "block";
-        event.currentTarget.classList.add("active");
+    // Show the selected tab
+    document.getElementById(tabName).style.display = "block";
+
+    // Add active class if event exists (prevents error on page load)
+    if (event) event.currentTarget.classList.add("active");
+}
+
+function togglePassword(inputId, eyeId) {
+    let passwordField = document.getElementById(inputId);
+    let eyeIcon = document.getElementById(eyeId);
+
+    if (passwordField.type === "password") {
+        passwordField.type = "text";
+        eyeIcon.classList.remove("fa-eye");
+        eyeIcon.classList.add("fa-eye-slash");
+    } else {
+        passwordField.type = "password";
+        eyeIcon.classList.remove("fa-eye-slash");
+        eyeIcon.classList.add("fa-eye");
     }
+}
 
-    function togglePassword(inputId, eyeId) {
-        let passwordField = document.getElementById(inputId);
-        let eyeIcon = document.getElementById(eyeId);
+function disableLoginButton() {
+    let loginButton = document.getElementById("adminLoginButton");
+    loginButton.innerHTML = "Logging in...";
+    loginButton.disabled = true; // Disable the button
+    loginButton.style.opacity = "0.7"; // Reduce opacity
+    loginButton.style.cursor = "not-allowed"; // Change cursor to indicate it's disabled
+}
 
-        if (passwordField.type === "password") {
-            passwordField.type = "text";
-            eyeIcon.classList.remove("fa-eye");
-            eyeIcon.classList.add("fa-eye-slash");
-        } else {
-            passwordField.type = "password";
-            eyeIcon.classList.remove("fa-eye-slash");
-            eyeIcon.classList.add("fa-eye");
-        }
+document.addEventListener("DOMContentLoaded", function () {
+    let hasError = document.querySelector(".error-message"); // Check if there's an error message
+    let currentPath = window.location.pathname; // Get the current URL path
+
+    if (currentPath.includes("admin_login") || hasError) {
+        openTab(null, "admin-login"); // Show admin login tab if the URL contains 'admin_login' or if there's an error
+        document.querySelector(".tablinks:nth-child(2)").classList.add("active"); // Set admin tab active
+    } else {
+        openTab(null, "user-login"); // Default to user login tab
+        document.querySelector(".tablinks:nth-child(1)").classList.add("active"); // Set user tab active
     }
-
-    // Set the default active tab on page load
-    document.addEventListener("DOMContentLoaded", function () {
-        document.getElementById("user-login").style.display = "block";
-        document.getElementById("admin-login").style.display = "none";
-    });
+});
 
 </script>
+
 {% endblock %}
