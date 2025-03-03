@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -16,9 +15,25 @@ def booking(request):
     
     return render(request, 'booking.html')
 
-def user_login(request): 
-    
-    return render(request, 'login.html')
+User = get_user_model()  # Get the CustomUser model
+
+
+def user_login(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
+
+        # Authenticate user (email-based)
+        user = authenticate(request, email=email, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect(reverse("user_dash"))  # Redirect to user dashboard
+        else:
+            return render(request, "login.html", {"error": "Invalid email or password"})
+
+    return render(request, "login.html")
+
 
 def admin_login(request):
     if request.method == "POST":
@@ -28,19 +43,21 @@ def admin_login(request):
         try:
             user = User.objects.get(email=email)  # Find user by email
         except User.DoesNotExist:
-            user = None
-
-        if user is not None:
-            user = authenticate(request, username=user.username, password=password)
-            if user is not None and user.is_staff:
-                login(request, user)
-                return redirect("admin_dash")  # Redirect admin to dashboard
-            else:
-                messages.error(request, "Invalid credentials or not an admin!")
-        else:
             messages.error(request, "No admin found with this email.")
+            return render(request, "login.html")
+
+        # Authenticate using email and password
+        user = authenticate(request, email=email, password=password)
+
+        # Ensure user is an admin (both is_staff and is_superuser)
+        if user is not None and user.is_staff and user.is_superuser:
+            login(request, user)
+            return redirect("admin_dash")  # Redirect to admin dashboard
+        else:
+            messages.error(request, "Invalid credentials or not an admin!")
 
     return render(request, "login.html")
+
 
 def register(request):
     if request.method == "POST":
@@ -87,22 +104,21 @@ def contact(request):
     
     return render(request, 'contact.html')
 
-@login_required(login_url='admin_login')
 def admin_dash(request):
-    if not request.user.is_staff:  # Only allow staff users
-        return redirect(reverse("admin_login"))  # Redirect to the correct login page
-    
+    if not request.user.is_authenticated or not request.user.is_staff:  # Ensure user is authenticated and staff
+        return redirect(reverse("admin_login"))
+
     return render(request, 'admin_dash.html')
 
 def admin_logout(request):
     logout(request)
     return redirect(reverse("admin_login"))
 
-# @login_required(login_url='user_login')
 def user_dash(request):
-    
-    return render(request, 'user_dash.html')
+    if not request.user.is_authenticated:  # Check if user is logged in
+        return redirect(reverse("user_login"))
 
+    return render(request, 'user_dash.html')
 def user_logout(request):
     logout(request)
     return redirect(reverse("user_login"))

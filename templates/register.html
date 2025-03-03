@@ -20,7 +20,7 @@
             {% endfor %}
         </div>
     {% endif %}
-    <form action="{% url 'register' %}" method="POST">
+    <form action="{% url 'register' %}" method="POST" onsubmit="disableRegisterButton()">
         {% csrf_token %}
         
         <label for="firstname">First Name:</label>
@@ -51,7 +51,7 @@
             </span>
         </div>
     
-        <button type="submit">Register</button>
+        <button type="submit" id="registerButton">Register</button>
     </form>
     
     <p>Already have an account? <a href="{% url 'user_login' %}">Login here</a></p>
@@ -90,6 +90,14 @@
                 eyeIcon2.classList.remove("fa-eye-slash");
                 eyeIcon2.classList.add("fa-eye");
             }
+        }
+
+        function disableRegisterButton() {
+            let registerButton = document.getElementById("registerButton");
+            registerButton.innerHTML = "Creating account...";
+            registerButton.disabled = true; // Disable the button
+            registerButton.style.opacity = "0.7"; // Reduce opacity
+            registerButton.style.cursor = "not-allowed"; // Change cursor to indicate it's disabled
         }
 
 </script>

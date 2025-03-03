@@ -21,7 +21,11 @@
     <!-- User Login Form -->
     <div id="user-login" class="tabcontent active">
         <h2>User Login</h2>
-        <form action="user_login.php" method="POST">
+        {% if error %}
+            <p class="error-message">{{ error }}</p>
+        {% endif %}
+        <form action="{% url 'user_login' %}" method="POST" onsubmit="disableUserLoginButton()">
+            {% csrf_token %}
             <label for="email">Email:</label>
             <input type="email" name="email" placeholder="Enter your email" required>
 
@@ -33,9 +37,10 @@
                 </span>
             </div>
 
-            <button type="submit">Login as User</button>
+            <button type="submit" id="userLoginButton">Login as User</button>
         </form>
     </div>
+
 
     <!-- Admin Login Form -->
     <div id="admin-login" class="tabcontent">
@@ -46,7 +51,7 @@
             {% endfor %}
         {% endif %}
 
-        <form action="{% url 'admin_login' %}" method="POST" onsubmit="disableLoginButton()">
+        <form action="{% url 'admin_login' %}" method="POST" onsubmit="disableAdminLoginButton()">
             {% csrf_token %}
             <label for="admin-email">Admin Email:</label>
             <input type="email" name="admin-email" placeholder="Enter admin email" required>
@@ -99,12 +104,20 @@ function togglePassword(inputId, eyeId) {
     }
 }
 
-function disableLoginButton() {
-    let loginButton = document.getElementById("adminLoginButton");
-    loginButton.innerHTML = "Logging in...";
-    loginButton.disabled = true; // Disable the button
-    loginButton.style.opacity = "0.7"; // Reduce opacity
-    loginButton.style.cursor = "not-allowed"; // Change cursor to indicate it's disabled
+function disableUserLoginButton() {
+    let userLoginButton = document.getElementById("userLoginButton");
+    userLoginButton.innerHTML = "Logging in...";
+    userLoginButton.disabled = true; // Disable the button
+    userLoginButton.style.opacity = "0.7"; // Reduce opacity
+    userLoginButton.style.cursor = "not-allowed"; // Change cursor to indicate it's disabled
+}
+
+function disableAdminLoginButton() {
+    let adminLoginButton = document.getElementById("adminLoginButton");
+    adminLoginButton.innerHTML = "Logging in...";
+    adminLoginButton.disabled = true; // Disable the button
+    adminLoginButton.style.opacity = "0.7"; // Reduce opacity
+    adminLoginButton.style.cursor = "not-allowed"; // Change cursor to indicate it's disabled
 }
 
 document.addEventListener("DOMContentLoaded", function () {
