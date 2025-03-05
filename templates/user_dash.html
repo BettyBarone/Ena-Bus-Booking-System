@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Dashboard</title>
     <link rel="stylesheet" href="{% static 'assets/css/user_dash.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="icon" type="image/png" href="{% static 'assets/images/ena_coach-logo-removebg-preview.png' %}">
 </head>
 <body>
@@ -88,13 +88,22 @@
                     <input type="text" id="fullname" value="John Doe" disabled>
         
                     <label>Email:</label>
-                    <input type="email" id="email" value="johndoe@example.com" disabled>
+                    <input type="email" id="email_display" value="johndoe@example.com" disabled>
         
                     <label>Phone:</label>
-                    <input type="text" id="phone" value="+254700123456" disabled>
+                    <input type="text" id="phone_display" value="+254700123456" disabled>
         
+                    <!-- <label>Password:</label>
+                    <input type="password" id="password" value="********" disabled> -->
+
                     <label>Password:</label>
-                    <input type="password" id="password" value="********" disabled>
+                    <div class="profile-pass-cont">
+                        <input type="password" id="password" value="********" disabled>
+                        <span onclick="togglePassword()">
+                            <i id="toggleIcon" class="fa fa-eye"></i>
+                        </span>
+                    </div>
+
         
                     <button onclick="enableEditing()" id="editBtn">Edit Profile</button>
                     <button onclick="saveProfile()" id="saveBtn" style="display: none;">Save Changes</button>
@@ -150,8 +159,8 @@
         
             <!-- Bus Selection Form -->
             <form id="reserveForm">
-                <label for="bus">Choose a Bus:</label>
-                <select id="bus" name="bus" onchange="updateSeatOptions()">
+                <label for="bus_select">Choose a Bus:</label>
+                <select id="bus_select" name="bus" onchange="updateSeatOptions()">
                     <option value="">Select Bus</option>
                     <!-- Bus options will be dynamically populated -->
                 </select>
@@ -184,17 +193,17 @@
                 <label for="name">Full Name:</label>
                 <input type="text" id="name" name="name" required>
         
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
+                <label for="email_input">Email:</label>
+                <input type="email" id="email_input" name="email" required>
         
-                <label for="phone">Phone Number:</label>
-                <input type="tel" id="phone" name="phone" placeholder="07XXXXXXXX" required>
+                <label for="phone_input">Phone Number:</label>
+                <input type="tel" id="phone_input" name="phone" placeholder="07XXXXXXXX" required>
         
                 <label for="booking_id">Booking ID:</label>
                 <input type="text" id="booking_id" name="booking_id" value="BK123456" readonly>
         
-                <label for="bus">Bus Name & Route:</label>
-                <input type="text" id="bus" name="bus" value="Ena Coach - Nairobi to Mombasa" readonly>
+                <label for="bus_display">Bus Name & Route:</label>
+                <input type="text" id="bus_display" name="bus" value="Ena Coach - Nairobi to Mombasa" readonly>
         
                 <label for="fare">Total Fare (KES):</label>
                 <input type="text" id="fare" name="fare" value="1500" readonly>
@@ -289,31 +298,86 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
+// Ensure elements are correctly initialized on page load
+window.onload = function () {
+    document.getElementById("password").disabled = true;
+    let toggleIcon = document.getElementById("toggleIcon");
+
+    toggleIcon.classList.add("disabled"); // Ensure the icon starts disabled
+
+    // Force a re-render to apply the CSS properly
+    toggleIcon.style.color = "lightgrey";
+};
+
+// Enable editing profile fields
 function enableEditing() {
     document.getElementById("fullname").disabled = false;
-    document.getElementById("email").disabled = false;
-    document.getElementById("phone").disabled = false;
+    document.getElementById("email_display").disabled = false;
+    document.getElementById("phone_display").disabled = false;
     document.getElementById("password").disabled = false;
-    
+
+    // Enable the toggle icon
+    document.getElementById("toggleIcon").classList.remove("disabled");
+    toggleIcon.style.color = "#534f4f";
+
     document.getElementById("saveBtn").style.display = "inline-block";
 }
 
+// Save updated profile
 function saveProfile() {
     let fullname = document.getElementById("fullname").value;
-    let email = document.getElementById("email").value;
-    let phone = document.getElementById("phone").value;
-    let password = document.getElementById("password").value;
+    let email = document.getElementById("email_display").value;
+    let phone = document.getElementById("phone_display").value;
+    let passwordInput = document.getElementById("password");
+    let toggleIcon = document.getElementById("toggleIcon");
 
     // Simulate saving data (In real scenario, send data to Django backend)
     alert("Profile updated successfully!");
 
+    // Disable fields after saving
     document.getElementById("fullname").disabled = true;
-    document.getElementById("email").disabled = true;
-    document.getElementById("phone").disabled = true;
-    document.getElementById("password").disabled = true;
+    document.getElementById("email_display").disabled = true;
+    document.getElementById("phone_display").disabled = true;
+    passwordInput.disabled = true;
+
+    // Force password field back to masked state (password type)
+    passwordInput.type = "password";
+
+    // Disable the toggle icon
+    toggleIcon.classList.add("disabled");
+    toggleIcon.classList.remove("fa-eye-slash"); // Ensure correct icon state
+    toggleIcon.classList.add("fa-eye");
+
+    // Force a re-render to ensure color changes
+    toggleIcon.style.color = "lightgrey";
 
     document.getElementById("saveBtn").style.display = "none";
 }
+
+
+// Toggle password visibility
+function togglePassword() {
+    let passwordInput = document.getElementById("password");
+    let toggleIcon = document.getElementById("toggleIcon");
+
+    // Prevent clicking when disabled
+    if (toggleIcon.classList.contains("disabled")) {
+        return;
+    }
+
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleIcon.classList.remove("fa-eye");
+        toggleIcon.classList.add("fa-eye-slash");
+    } else {
+        passwordInput.type = "password";
+        toggleIcon.classList.remove("fa-eye-slash");
+        toggleIcon.classList.add("fa-eye");
+    }
+}
+
+
+
 
 document.addEventListener("DOMContentLoaded", function () {
     // Simulate available buses and seats data
@@ -331,13 +395,13 @@ document.addEventListener("DOMContentLoaded", function () {
             <td>${bus.route}</td>
             <td>2025-02-20 07:00 AM</td> <!-- Simulated time -->
             <td>${bus.seats.length}</td>
-            <td><button onclick="showReserveForm('${bus.bus}')">Book Now</button></td>
+            <td><button onclick="showReserveForm('${bus.busNumber}')">Book Now</button></td>
         </tr>`;
         availableTable.innerHTML += row;
     });
 
     // Show the Reserve Your Seat form when "Book Now" is clicked
-    window.showReserveForm = function(busName) {
+    window.showReserveForm = function(busNumber) {
         // Hide Available Buses and My Bookings section
         document.getElementById("booking").style.display = "none";
 
@@ -345,10 +409,10 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("reserve-seat").style.display = "block";
 
         // Find the selected bus from the available buses
-        let selectedBus = buses.find(bus => bus.bus === busName);
+        let selectedBus = buses.find(bus => bus.busNumber === busNumber);
 
         // Pre-select the bus in the form
-        document.getElementById("bus").value = selectedBus.bus;
+        document.getElementById("bus_select").value = busNumber;
 
         // Update the seat options based on the selected bus
         updateSeatOptions(selectedBus);
@@ -373,7 +437,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("reserveForm").addEventListener("submit", function (event) {
         event.preventDefault();  // Prevent form submission to server
 
-        let busName = document.getElementById("bus").value;
+        let busName = document.getElementById("bus_select").value;
         let date = document.getElementById("date").value;
         let seat = document.getElementById("seats").value;
 

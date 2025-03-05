@@ -24,7 +24,7 @@ body {
     top: 0;
 }
 
-.sidebar h2 {
+h2 {
     text-align: center;
 }
 
@@ -64,10 +64,10 @@ ul#sidebar-menu li a.active {
 }
 
 .content {
-    margin-left: 7rem;
-    width: 77%; /* Ensure it does not extend beyond screen */
+    margin-left: 21%;
+    width: 78%; /* Ensure it does not extend beyond screen */
     padding: 20px;
-    padding-left: 2rem;
+    padding-left: 0.5rem;
     background: whitesmoke;
     overflow-x: hidden; /* Prevents horizontal scroll */
 }
@@ -90,9 +90,11 @@ ul#sidebar-menu li a.active {
     background: #007BFF;
     color: white;
     padding: 20px;
-    width: 150px;
+    width: 20%;
     text-align: center;
     border-radius: 5px;
+    margin-left: 1rem;
+    margin-bottom: 2rem;
 }
 
 .add-btn {
@@ -101,7 +103,7 @@ ul#sidebar-menu li a.active {
     padding: 10px;
     border: none;
     cursor: pointer;
-    margin-left: 51rem;
+    margin-left: 53.2rem;
 }
 
 button:hover {

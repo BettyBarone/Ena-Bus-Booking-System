@@ -1,12 +1,13 @@
 {% load static %}
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Bus Booking</title>
     <link rel="stylesheet" href="{% static 'assets/css/admin_dash.css' %}">
-    <script src="admin.js" defer></script>
+    <!-- <script src="admin.js" defer></script> -->
+    <link rel="icon" type="image/png" href="{% static 'assets/images/ena_coach-logo-removebg-preview.png' %}">
 </head>
 <body>
 
@@ -152,12 +153,17 @@
 document.addEventListener("DOMContentLoaded", function() {
     let savedSection = localStorage.getItem("activeSection");
 
-    if (savedSection) {
-        showSection(savedSection, document.querySelector(`#sidebar-menu a[href="#"][onclick*="${savedSection}"]`));
-    } else {
-        showSection("dashboard", document.querySelector("#sidebar-menu li a:first-child"));
+    // Check if savedSection is valid; otherwise, default to "dashboard"
+    if (!savedSection || !document.getElementById(savedSection)) {
+        savedSection = "dashboard";
     }
+
+    let sidebarLinks = document.querySelectorAll("#sidebar-menu li a");
+    let activeLink = [...sidebarLinks].find(link => link.getAttribute("onclick").includes(savedSection));
+
+    showSection(savedSection, activeLink);
 });
+
 
 function confirmLogout() {
     return confirm("Are you sure you want to log out?");

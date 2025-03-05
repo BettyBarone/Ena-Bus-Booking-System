@@ -43,31 +43,28 @@
 
 
     <!-- Admin Login Form -->
-    <div id="admin-login" class="tabcontent">
-        <h2>Admin Login</h2>
-        {% if messages %}
-            {% for message in messages %}
-                <p class="error-message">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-
-        <form action="{% url 'admin_login' %}" method="POST" onsubmit="disableAdminLoginButton()">
-            {% csrf_token %}
-            <label for="admin-email">Admin Email:</label>
-            <input type="email" name="admin-email" placeholder="Enter admin email" required>
-        
-            <label for="admin-password">Password:</label>
-            <div class="password-container">
-                <input type="password" id="password-admin" name="admin-password" placeholder="Enter admin password" required>
-                <span class="toggle-icon" onclick="togglePassword('password-admin', 'eyeIcon-admin')">
-                    <i id="eyeIcon-admin" class="fas fa-eye"></i> 
-                </span>
-            </div>
-        
-            <button type="submit" id="adminLoginButton">Login as Admin</button>
-        </form>
-        
-    </div>
+<div id="admin-login" class="tabcontent">
+    <h2>Admin Login</h2>
+    {% if admin_error %}
+        <p class="error-message">{{ admin_error }}</p>
+    {% endif %}
+    
+    <form action="{% url 'admin_login' %}" method="POST" onsubmit="disableAdminLoginButton()">
+        {% csrf_token %}
+        <label for="admin-email">Admin Email:</label>
+        <input type="email" name="admin-email" placeholder="Enter admin email" required>
+    
+        <label for="admin-password">Password:</label>
+        <div class="password-container">
+            <input type="password" id="password-admin" name="admin-password" placeholder="Enter admin password" required>
+            <span class="toggle-icon" onclick="togglePassword('password-admin', 'eyeIcon-admin')">
+                <i id="eyeIcon-admin" class="fas fa-eye"></i> 
+            </span>
+        </div>
+    
+        <button type="submit" id="adminLoginButton">Login as Admin</button>
+    </form>
+</div>
 </section>
 {% endblock %}
 
@@ -121,17 +118,30 @@ function disableAdminLoginButton() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    let hasError = document.querySelector(".error-message"); // Check if there's an error message
-    let currentPath = window.location.pathname; // Get the current URL path
+    let userError = document.querySelector("#user-login .error-message"); // Check for user error inside user login form
+    let adminError = document.querySelector("#admin-login .error-message"); // Check for admin error inside admin login form
 
-    if (currentPath.includes("admin_login") || hasError) {
-        openTab(null, "admin-login"); // Show admin login tab if the URL contains 'admin_login' or if there's an error
+    if (adminError) {
+        openTab(null, "admin-login"); // Show admin login tab if there's an admin error
         document.querySelector(".tablinks:nth-child(2)").classList.add("active"); // Set admin tab active
     } else {
         openTab(null, "user-login"); // Default to user login tab
         document.querySelector(".tablinks:nth-child(1)").classList.add("active"); // Set user tab active
     }
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    let path = window.location.pathname; // Get the current URL path
+
+    if (path.includes("admin_login")) {
+        openTab(null, "admin-login"); // Show Admin Login tab
+        document.querySelector(".tablinks:nth-child(2)").classList.add("active"); // Set Admin tab active
+    } else {
+        openTab(null, "user-login"); // Default to User Login tab
+        document.querySelector(".tablinks:nth-child(1)").classList.add("active"); // Set User tab active
+    }
+});
+
 
 </script>
 

@@ -30,7 +30,7 @@ def user_login(request):
             login(request, user)
             return redirect(reverse("user_dash"))  # Redirect to user dashboard
         else:
-            return render(request, "login.html", {"error": "Invalid email or password"})
+            return render(request, "login.html", {"error": "Invalid email or password"})  # Pass user error
 
     return render(request, "login.html")
 
@@ -43,8 +43,7 @@ def admin_login(request):
         try:
             user = User.objects.get(email=email)  # Find user by email
         except User.DoesNotExist:
-            messages.error(request, "No admin found with this email.")
-            return render(request, "login.html")
+            return render(request, "login.html", {"admin_error": "No admin found with this email."})  # Pass admin error
 
         # Authenticate using email and password
         user = authenticate(request, email=email, password=password)
@@ -54,7 +53,7 @@ def admin_login(request):
             login(request, user)
             return redirect("admin_dash")  # Redirect to admin dashboard
         else:
-            messages.error(request, "Invalid credentials or not an admin!")
+            return render(request, "login.html", {"admin_error": "Invalid credentials or not an admin!"})  # Pass admin error
 
     return render(request, "login.html")
 

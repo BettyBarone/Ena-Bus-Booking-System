@@ -167,6 +167,28 @@ th {
     font-size: inherit;
 }
 
+.profile-container .profile-pass-cont {
+    position: relative;
+}
+
+.profile-container .profile-pass-cont span {
+    position: absolute;
+    cursor: pointer; 
+    top: 32%;
+    right: 20px;
+    font-size: 1.2rem;
+    color: black; /* Default color */
+    transition: color 0.3s ease-in-out; /* Smooth color transition */
+}
+
+/* .profile-container .profile-pass-cont span.disabled {
+    color: gray; 
+    pointer-events: none; 
+    cursor: not-allowed; 
+}
+ */
+
+
 .profile-info button {
     background: #ff6600;
     color: white;
