@@ -30,7 +30,8 @@
     <div class="content">
         <div id="dashboard" class="section">
             <h2>Dashboard</h2>
-            <p>Welcome to your dashboard, <span id="username">User</span>!</p>
+            <p>Welcome to your dashboard, <span id="username">{{ first_name }} {{ last_name }}</span>!</p>
+
         
             <div class="dashboard-cards">
                 <div class="card">
@@ -249,53 +250,59 @@
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-    // Simulate fetching data from the backend
-    let userData = {
-        username: "John Doe",
-        totalBookings: 5,
-        upcomingTrips: 2,
-        totalPayments: 4500,
-        recentBookings: [
-    { busNumber: "001", route: "Nairobi - Kisumu", departureTime: "08:00 AM", date: "2025-02-20", seat: "12A", status: "Confirmed" },
-    { busNumber: "002", route: "Nairobi - Eldoret", departureTime: "02:30 PM", date: "2025-02-22", seat: "7B", status: "Pending" }
-],
-        recentPayments: [
-            { amount: "Ksh 2000", transactionId: "MPESA123456", status: "Completed", date: "2025-02-10" },
-            { amount: "Ksh 2500", transactionId: "MPESA654321", status: "Pending", date: "2025-02-12" }
-        ]
-    };
-
-    document.getElementById("username").innerText = userData.username;
-    document.getElementById("totalBookings").innerText = userData.totalBookings;
-    document.getElementById("upcomingTrips").innerText = userData.upcomingTrips;
-    document.getElementById("totalPayments").innerText = `Ksh ${userData.totalPayments}`;
-
-    let bookingsTable = document.getElementById("recentBookings");
-    bookingsTable.innerHTML = "";
-    userData.recentBookings.forEach(booking => {
-        let row = `<tr>
-            <td>${booking.busNumber}</td>
-            <td>${booking.route}</td>
-            <td>${booking.departureTime}</td>
-            <td>${booking.date}</td>
-            <td>${booking.seat}</td>
-            <td>${booking.status}</td>
-        </tr>`;
-        bookingsTable.innerHTML += row;
-    });
-
-    let paymentsTable = document.getElementById("recentPayments");
-    paymentsTable.innerHTML = "";
-    userData.recentPayments.forEach(payment => {
-        let row = `<tr>
-            <td>${payment.amount}</td>
-            <td>${payment.transactionId}</td>
-            <td>${payment.status}</td>
-            <td>${payment.date}</td>
-        </tr>`;
-        paymentsTable.innerHTML += row;
-    });
+    fetchDashboardData();
 });
+
+function fetchDashboardData() {
+    fetch('/dashboard-data/')  // Django URL where JSON data is served
+        .then(response => response.json())
+        .then(data => {
+            // Update the dashboard summary
+            document.getElementById("totalBookings").textContent = data.totalBookings;
+            document.getElementById("upcomingTrips").textContent = data.upcomingTrips;
+            document.getElementById("totalPayments").textContent = "Ksh " + data.totalPayments.toFixed(2);
+
+            // Update Recent Bookings Table
+            const bookingsTable = document.getElementById("recentBookings");
+            bookingsTable.innerHTML = ""; // Clear existing content
+
+            if (data.recentBookings.length > 0) {
+                data.recentBookings.forEach(booking => {
+                    let row = `<tr>
+                        <td>${booking.bus__bus_number}</td>
+                        <td>${booking.route__name}</td>
+                        <td>${booking.departure_time}</td>
+                        <td>${booking.date}</td>
+                        <td>${booking.seat_number}</td>
+                        <td>${booking.status}</td>
+                    </tr>`;
+                    bookingsTable.innerHTML += row;
+                });
+            } else {
+                bookingsTable.innerHTML = "<tr><td colspan='6'>No bookings available.</td></tr>";
+            }
+
+            // Update Recent Payments Table
+            const paymentsTable = document.getElementById("recentPayments");
+            paymentsTable.innerHTML = ""; // Clear existing content
+
+            if (data.recentPayments.length > 0) {
+                data.recentPayments.forEach(payment => {
+                    let row = `<tr>
+                        <td>Ksh ${payment.amount.toFixed(2)}</td>
+                        <td>${payment.transaction_id}</td>
+                        <td>${payment.status}</td>
+                        <td>${payment.date}</td>
+                    </tr>`;
+                    paymentsTable.innerHTML += row;
+                });
+            } else {
+                paymentsTable.innerHTML = "<tr><td colspan='4'>No transactions available.</td></tr>";
+            }
+        })
+        .catch(error => console.error("Error fetching dashboard data:", error));
+}
+
 
 
 // Ensure elements are correctly initialized on page load

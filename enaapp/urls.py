@@ -11,5 +11,6 @@ urlpatterns = [
     path('admin_dash/', views.admin_dash, name='admin_dash'),
     path("admin_logout/", views.admin_logout, name="admin_logout"),
     path('user_dash/', views.user_dash, name='user_dash'),
+    path('dashboard-data/', views.dashboard_data, name='dashboard-data'),
     path("user_logout/", views.user_logout, name="user_logout"),
 ]

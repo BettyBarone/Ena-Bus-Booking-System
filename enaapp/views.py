@@ -5,6 +5,11 @@ from django.contrib.auth import logout
 from django.contrib.auth.models import User
 from django.urls import reverse
 from enaapp.models import CustomUser  
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from .models import Booking, Payment
+from django.db.models import Sum
+
 
 # Create your views here.
 def index(request): 
@@ -43,7 +48,7 @@ def admin_login(request):
         try:
             user = User.objects.get(email=email)  # Find user by email
         except User.DoesNotExist:
-            return render(request, "login.html", {"admin_error": "No admin found with this email."})  # Pass admin error
+            return render(request, "login.html", {"admin_error": "No admin found with this email."})  # Pass error
 
         # Authenticate using email and password
         user = authenticate(request, email=email, password=password)
@@ -51,9 +56,14 @@ def admin_login(request):
         # Ensure user is an admin (both is_staff and is_superuser)
         if user is not None and user.is_staff and user.is_superuser:
             login(request, user)
-            return redirect("admin_dash")  # Redirect to admin dashboard
+            response = redirect("admin_dash")  # Redirect to admin dashboard
+
+            # **Clear localStorage on login**
+            response.set_cookie("clear_local_storage", "true")
+
+            return response
         else:
-            return render(request, "login.html", {"admin_error": "Invalid credentials or not an admin!"})  # Pass admin error
+            return render(request, "login.html", {"admin_error": "Invalid credentials or not an admin!"})  # Pass error
 
     return render(request, "login.html")
 
@@ -114,10 +124,44 @@ def admin_logout(request):
     return redirect(reverse("admin_login"))
 
 def user_dash(request):
-    if not request.user.is_authenticated:  # Check if user is logged in
+    if not request.user.is_authenticated:  # Ensure user is logged in
         return redirect(reverse("user_login"))
 
-    return render(request, 'user_dash.html')
+    # Pass user details to the template
+    context = {
+        "first_name": request.user.first_name,
+        "last_name": request.user.last_name,
+    }
+    
+    return render(request, 'user_dash.html', context)
+
+@login_required
+def dashboard_data(request):
+    user = request.user
+
+    # Fetch relevant data
+    total_bookings = Booking.objects.filter(user=user).count()
+    upcoming_trips = Booking.objects.filter(user=user, status='Upcoming').count()
+    total_payments = Payment.objects.filter(user=user).aggregate(total_amount=Sum('amount'))['total_amount'] or 0
+
+
+    recent_bookings = list(Booking.objects.filter(user=user).order_by('-booking_date')[:5].values(
+    'trip__bus__bus_number', 'trip__route', 'trip__departure_time', 'seat_number', 'status', 'booking_date'
+))
+
+    recent_payments = list(Payment.objects.filter(user=user).order_by('-transaction_date')[:5].values(
+    'amount', 'mpesa_transaction_id', 'status', 'transaction_date'
+))
+
+
+    return JsonResponse({
+        'totalBookings': total_bookings,
+        'upcomingTrips': upcoming_trips,
+        'totalPayments': total_payments,
+        'recentBookings': recent_bookings,
+        'recentPayments': recent_payments,
+    })
+
 def user_logout(request):
     logout(request)
     return redirect(reverse("user_login"))

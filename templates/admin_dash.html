@@ -149,18 +149,27 @@
     }
 }
 
-// Ensure Dashboard is selected by default on page load
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
+    // Check if the server has set a flag to clear localStorage
+    if (document.cookie.includes("clear_local_storage=true")) {
+        localStorage.removeItem("activeSection"); // Reset to default
+        document.cookie = "clear_local_storage=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    }
+
     let savedSection = localStorage.getItem("activeSection");
 
-    // Check if savedSection is valid; otherwise, default to "dashboard"
+    // Ensure the default section is "dashboard" if savedSection is invalid
     if (!savedSection || !document.getElementById(savedSection)) {
         savedSection = "dashboard";
     }
 
+    // Get sidebar links
     let sidebarLinks = document.querySelectorAll("#sidebar-menu li a");
+
+    // Find the active link based on the saved section
     let activeLink = [...sidebarLinks].find(link => link.getAttribute("onclick").includes(savedSection));
 
+    // Show the active section
     showSection(savedSection, activeLink);
 });
 
