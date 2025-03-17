@@ -1,0 +1,64 @@
+
+/* Hero Section */
+.hero {
+    text-align: center;
+    padding: 50px;
+    background: url("../images/ena_coach_bus.jpg") no-repeat center center/cover;
+    color: white;
+}
+
+.hero h2 {
+    font-size: 2.5em;
+    text-shadow: 5px 5px 5px rgba(0, 0, 0);
+}
+
+.hero p {
+    font-size: 1.5em;
+    text-shadow: 5px 5px 5px rgba(0, 0, 0);
+}
+
+.hero .btn {
+    display: inline-block;
+    background-color: #ff6600;
+    color: white;
+    padding: 10px 20px;
+    margin-top: 20px;
+    text-decoration: none;
+    font-size: 1.2em;
+    border-radius: 5px;
+}
+
+.hero .btn:hover {
+    background-color: #cc5200;
+}
+
+/* Services Section */
+.services {
+    text-align: center;
+    padding: 1rem;
+    background-color: white;
+    
+}
+
+.service-containers {
+    display: flex;
+
+}
+
+.service-box {
+    display: inline-block;
+    width: 30%;
+    margin: 10px;
+    padding: 20px;
+    background-color: #ffcc99;
+    border-radius: 10px;
+}
+
+/* .service-box img {
+    width: 50px;
+} */
+
+.service-box h3 {
+    margin: 10px 0;
+}
+
