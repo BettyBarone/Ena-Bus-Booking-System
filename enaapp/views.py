@@ -135,32 +135,34 @@ def user_dash(request):
     
     return render(request, 'user_dash.html', context)
 
-@login_required
-def dashboard_data(request):
-    user = request.user
+# @login_required
+# def dashboard_data(request):
+#     user = request.user
 
-    # Fetch relevant data
-    total_bookings = Booking.objects.filter(user=user).count()
-    upcoming_trips = Booking.objects.filter(user=user, status='Upcoming').count()
-    total_payments = Payment.objects.filter(user=user).aggregate(total_amount=Sum('amount'))['total_amount'] or 0
-
-
-    recent_bookings = list(Booking.objects.filter(user=user).order_by('-booking_date')[:5].values(
-    'trip__bus__bus_number', 'trip__route', 'trip__departure_time', 'seat_number', 'status', 'booking_date'
-))
-
-    recent_payments = list(Payment.objects.filter(user=user).order_by('-transaction_date')[:5].values(
-    'amount', 'mpesa_transaction_id', 'status', 'transaction_date'
-))
+#     # Fetch relevant data
+#     total_bookings = Booking.objects.filter(user=user).count()
+#     upcoming_trips = Booking.objects.filter(user=user, status='Upcoming').count()
+#     total_payments = Payment.objects.filter(user=user).aggregate(total_amount=Sum('amount'))['total_amount'] or 0
 
 
-    return JsonResponse({
-        'totalBookings': total_bookings,
-        'upcomingTrips': upcoming_trips,
-        'totalPayments': total_payments,
-        'recentBookings': recent_bookings,
-        'recentPayments': recent_payments,
-    })
+#     recent_bookings = list(Booking.objects.filter(user=user)
+#     .select_related('trip', 'trip__bus')
+#     .order_by('-booking_date')[:5]
+#     .values('trip__bus__bus_number', 'trip__route', 'trip__departure_time', 'seat_number', 'status', 'booking_date'))
+
+
+#     recent_payments = list(Payment.objects.filter(user=user).order_by('-transaction_date')[:5].values(
+#     'amount', 'mpesa_transaction_id', 'status', 'transaction_date'
+# ))
+
+
+#     return JsonResponse({
+#         'totalBookings': total_bookings,
+#         'upcomingTrips': upcoming_trips,
+#         'totalPayments': total_payments,
+#         'recentBookings': recent_bookings,
+#         'recentPayments': recent_payments,
+#     })
 
 def user_logout(request):
     logout(request)

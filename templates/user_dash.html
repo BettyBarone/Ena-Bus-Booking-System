@@ -249,59 +249,116 @@
     };
 });
 
+let socket;
+let pingInterval;  // Store interval ID
+
 document.addEventListener("DOMContentLoaded", function () {
-    fetchDashboardData();
+    if (isUserLoggedIn()) {
+        connectWebSocket(); // Start WebSocket connection if logged in
+    }
 });
 
-function fetchDashboardData() {
-    fetch('/dashboard-data/')  // Django URL where JSON data is served
-        .then(response => response.json())
-        .then(data => {
-            // Update the dashboard summary
-            document.getElementById("totalBookings").textContent = data.totalBookings;
-            document.getElementById("upcomingTrips").textContent = data.upcomingTrips;
-            document.getElementById("totalPayments").textContent = "Ksh " + data.totalPayments.toFixed(2);
+function connectWebSocket() {
+    let protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+    socket = new WebSocket(protocol + window.location.host + "/ws/dashboard/");
 
-            // Update Recent Bookings Table
-            const bookingsTable = document.getElementById("recentBookings");
-            bookingsTable.innerHTML = ""; // Clear existing content
+    socket.onopen = function () {
+        console.log("✅ WebSocket connected!");
+        socket.send(JSON.stringify({ type: "fetch_dashboard" }));
+        keepAlive();  // Start ping mechanism
+    };
 
-            if (data.recentBookings.length > 0) {
-                data.recentBookings.forEach(booking => {
-                    let row = `<tr>
-                        <td>${booking.bus__bus_number}</td>
-                        <td>${booking.route__name}</td>
-                        <td>${booking.departure_time}</td>
-                        <td>${booking.date}</td>
-                        <td>${booking.seat_number}</td>
-                        <td>${booking.status}</td>
-                    </tr>`;
-                    bookingsTable.innerHTML += row;
-                });
-            } else {
-                bookingsTable.innerHTML = "<tr><td colspan='6'>No bookings available.</td></tr>";
+    socket.onmessage = function (event) {
+        try {
+            let data = JSON.parse(event.data);
+            if (data.type === "pong") return;  // Ignore pong responses
+            updateDashboard(data);
+        } catch (error) {
+            console.error("❌ Error parsing WebSocket message:", error);
+        }
+    };
+
+    socket.onerror = function (error) {
+        console.error("⚠️ WebSocket error:", error);
+    };
+
+    socket.onclose = function () {
+        console.warn("⚠️ WebSocket closed, attempting reconnection...");
+        clearInterval(pingInterval);  // Stop pinging when disconnected
+        setTimeout(() => {
+            if (isUserLoggedIn()) {
+                connectWebSocket(); // Reconnect if user is logged in
             }
-
-            // Update Recent Payments Table
-            const paymentsTable = document.getElementById("recentPayments");
-            paymentsTable.innerHTML = ""; // Clear existing content
-
-            if (data.recentPayments.length > 0) {
-                data.recentPayments.forEach(payment => {
-                    let row = `<tr>
-                        <td>Ksh ${payment.amount.toFixed(2)}</td>
-                        <td>${payment.transaction_id}</td>
-                        <td>${payment.status}</td>
-                        <td>${payment.date}</td>
-                    </tr>`;
-                    paymentsTable.innerHTML += row;
-                });
-            } else {
-                paymentsTable.innerHTML = "<tr><td colspan='4'>No transactions available.</td></tr>";
-            }
-        })
-        .catch(error => console.error("Error fetching dashboard data:", error));
+        }, 5000);
+    };
 }
+
+function keepAlive() {
+    clearInterval(pingInterval);  // Prevent multiple intervals
+    pingInterval = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+            console.log("🔄 Sending ping to WebSocket...");
+            socket.send(JSON.stringify({ type: "ping" })); // Keep connection alive
+        }
+    }, 30000); // Send a ping every 30 seconds
+}
+
+// ✅ Check if user is logged in
+function isUserLoggedIn() {
+    return !!document.querySelector("#userProfile") || !!document.querySelector("#dashboard"); 
+}
+
+// Function to update dashboard
+function updateDashboard(data) {
+    document.getElementById("totalBookings").textContent = data.totalBookings || 0;
+    document.getElementById("upcomingTrips").textContent = data.upcomingTrips || 0;
+    document.getElementById("totalPayments").textContent = "Ksh " + (data.totalPayments || 0).toFixed(2);
+
+    updateTable("recentBookings", data.recentBookings, [
+        "trip__bus__bus_number",
+        "trip__route",
+        "trip__departure_time",
+        "booking_date",
+        "seat_number",
+        "status"
+    ], "No bookings available.");
+
+    updateTable("recentPayments", data.recentPayments, [
+        "amount",
+        "mpesa_transaction_id",
+        "status",
+        "transaction_date"
+    ], "No transactions available.", true);
+}
+
+// Function to update tables dynamically
+function updateTable(tableId, items, keys, emptyMessage, isPayment = false) {
+    const table = document.getElementById(tableId);
+    table.innerHTML = ""; // Clear existing content
+
+    if (items.length > 0) {
+        items.forEach(item => {
+            let row = document.createElement("tr");
+            keys.forEach(key => {
+                let cell = document.createElement("td");
+                let value = item[key] || "-"; // Default to "-" if null
+                if (isPayment && key === "amount") value = "Ksh " + Number(value).toFixed(2);
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+            table.appendChild(row);
+        });
+    } else {
+        let row = document.createElement("tr");
+        let cell = document.createElement("td");
+        cell.setAttribute("colspan", keys.length);
+        cell.textContent = emptyMessage;
+        row.appendChild(cell);
+        table.appendChild(row);
+    }
+}
+
+
 
 
 
