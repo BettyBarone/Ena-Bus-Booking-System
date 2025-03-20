@@ -26,6 +26,8 @@
         {% endif %}
         <form action="{% url 'user_login' %}" method="POST" onsubmit="disableUserLoginButton()">
             {% csrf_token %}
+
+            <p>Please enter your credentials below to Login</p>
             <label for="email">Email:</label>
             <input type="email" name="email" placeholder="Enter your email" required>
 

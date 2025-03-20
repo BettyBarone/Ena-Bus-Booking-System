@@ -129,6 +129,19 @@ th {
 td {
     text-align: center;
 }
+
+.delete-btn {
+    background-color: #2C3E50;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+.delete-btn:hover {
+    background-color: darkred;
+}
+
 /* Modal Styling */
 .modal {
     display: none;

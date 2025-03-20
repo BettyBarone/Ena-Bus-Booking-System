@@ -48,7 +48,7 @@
                     <tr><th>Bus Number</th><th>Route</th><th>Capacity</th><th>Actions</th></tr>
                 </thead>
                 <tbody id="bus-list">
-                    <tr><td colspan="4">No buses added yet.</td></tr>
+                    <tr><td colspan="4">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -115,19 +115,24 @@
     </div>
 
     <!-- Add Bus Modal -->
-    <div id="bus-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('bus-modal')">&times;</span>
-            <h3>Add New Bus</h3>
-            <label>Bus Number:</label>
-            <input type="text" id="bus_name">
-            <label>Route:</label>
-            <input type="text" id="route">
-            <label>Capacity:</label>
-            <input type="number" id="capacity">
-            <button onclick="addBus()">Save Bus</button>
-        </div>
+<div id="bus-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('bus-modal')">&times;</span>
+        <h3>Add New Bus</h3>
+        <label>Bus Number:</label>
+        <input type="text" id="bus_name" oninput="validateBusNumber(this)">
+
+        <label>Route:</label>
+        <select id="route">
+            <option value="">Select Route</option>
+        </select>
+
+        <label>Capacity:</label>
+        <input type="number" id="capacity" min="1">
+
+        <button onclick="addBus()">Save Bus</button>
     </div>
+</div>
 
     <script>
         function showSection(sectionId, element) {
@@ -173,6 +178,22 @@ document.addEventListener("DOMContentLoaded", function () {
     showSection(savedSection, activeLink);
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+        fetch("/dashboard-data/")
+            .then(response => {
+                if (!response.ok) {
+                throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById("busCount").innerText = data.total_buses;
+                document.getElementById("userCount").innerText = data.total_users;
+                document.getElementById("bookingCount").innerText = data.total_bookings;
+                document.getElementById("totalRevenue").innerText = data.total_revenue;
+            })
+            .catch(error => console.error("Error fetching dashboard data:", error));
+                });
 
 function confirmLogout() {
     return confirm("Are you sure you want to log out?");
@@ -187,41 +208,131 @@ function closeModal(id) {
     document.getElementById(id).style.display = "none";
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+    fetchBuses();
+    fetchRoutes();
+});
+
+
+// Fetch all buses from the database
+function fetchBuses() {
+    fetch("/buses/")
+        .then(response => response.json())
+        .then(data => {
+            let table = document.getElementById("bus-list");
+            table.innerHTML = ""; // Clear existing rows
+
+            if (data.buses.length === 0) {
+                table.innerHTML = '<tr><td colspan="4">No buses added yet.</td></tr>';
+            } else {
+                data.buses.forEach(bus => {
+                    let row = table.insertRow();
+                    row.innerHTML = `<td>${bus.bus_number}</td>
+                                     <td>${bus.route}</td>
+                                     <td>${bus.capacity}</td>
+                                     <td><button class="delete-btn" onclick="deleteBus(${bus.id}, this)">Delete</button></td>`;
+                });
+            }
+        })
+        .catch(error => console.error("Error fetching buses:", error));
+    }
+
+// Fetch available routes
+function fetchRoutes() {
+    fetch("/routes/")
+        .then(response => response.json())
+        .then(data => {
+            let routeSelect = document.getElementById("route");
+            routeSelect.innerHTML = '<option value="">Select Route</option>'; // Reset dropdown
+
+            data.routes.forEach(route => {
+                let option = document.createElement("option");
+                option.value = route.route_name;
+                option.textContent = route.route_name;
+                routeSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error("Error fetching routes:", error));
+}
+
+// Validate Bus Number (Only Numbers)
+function validateBusNumber(input) {
+    input.value = input.value.replace(/\D/g, ""); // Remove non-numeric characters
+}
+
+// Add a new bus
 function addBus() {
-    let name = document.getElementById("bus_name").value;
+    let bus_number = document.getElementById("bus_name").value;
     let route = document.getElementById("route").value;
     let capacity = document.getElementById("capacity").value;
-    let table = document.getElementById("bus-list");
 
-    if (name && route && capacity) {
-        // Remove the "No buses added yet." row if it exists
-        if (table.rows.length === 1 && table.rows[0].cells.length === 1) {
-            table.innerHTML = ""; // Clears the placeholder row
-        }
-
-        // Append new bus row
-        let row = table.insertRow();
-        row.innerHTML = `<td>${name}</td><td>${route}</td><td>${capacity}</td>
-                         <td><button onclick="deleteBus(this)">Delete</button></td>`;
-
-        // Close modal after adding bus
-        closeModal('bus-modal');
-    } else {
+    if (!bus_number || !route || !capacity) {
         alert("Please fill all fields!");
+        return;
+    }
+
+    fetch("/buses/add/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bus_number, route, capacity })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        closeModal("bus-modal");
+        clearModalForm();
+        fetchBuses(); // Refresh table after adding
+    })
+    .catch(error => console.error("Error adding bus:", error));
+}
+
+// Clear modal form fields after adding a bus
+function clearModalForm() {
+    document.getElementById("bus_name").value = "";
+    document.getElementById("route").value = "";
+    document.getElementById("capacity").value = "";
+}
+
+// Delete a bus with confirmation
+function deleteBus(bus_id, btn) {
+    if (confirm("Are you sure you want to delete this bus?")) {
+        fetch(`/buses/delete/${bus_id}/`, { method: "DELETE" })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                btn.parentNode.parentNode.remove(); // Remove row from table
+            })
+            .catch(error => console.error("Error deleting bus:", error));
     }
 }
 
-// Function to delete a bus row
-function deleteBus(btn) {
-    let row = btn.parentNode.parentNode;
-    let table = document.getElementById("bus-list");
 
-    row.remove(); // Remove the selected row
+document.addEventListener("DOMContentLoaded", () => {
+    fetchUsers(); // Load users when the page loads
+});
 
-    // If no buses remain, add the "No buses added yet." row back
-    if (table.rows.length === 0) {
-        table.innerHTML = '<tr><td colspan="4">No buses added yet.</td></tr>';
-    }
+function fetchUsers() {
+    fetch("/users/")
+        .then(response => response.json())
+        .then(data => {
+            let table = document.getElementById("user-list");
+            table.innerHTML = ""; // Clear table
+
+            if (data.users.length === 0) {
+                table.innerHTML = '<tr><td colspan="4">No users found.</td></tr>';
+            } else {
+                data.users.forEach(user => {
+                    let row = table.insertRow();
+                    row.innerHTML = `<td>${user.name}</td>
+                                     <td>${user.email}</td>
+                                     <td>${user.role}</td>
+                                     <td>
+                                         <button class="delete-btn" onclick="confirmDeleteUser(${user.id}, this)">Delete</button>
+                                     </td>`;
+                });
+            }
+        })
+        .catch(error => console.error("Error fetching users:", error));
 }
 
 
@@ -229,38 +340,96 @@ function addUser() {
     let name = document.getElementById("user_name").value;
     let email = document.getElementById("user_email").value;
     let role = document.getElementById("user_role").value;
-    let table = document.getElementById("user-list");
 
     if (name && email && role) {
-        // Remove placeholder row if it exists
-        if (table.rows.length === 1 && table.rows[0].cells.length === 1) {
-            table.innerHTML = ""; // Clear placeholder row
-        }
-
-        // Append new user row
-        let row = table.insertRow();
-        row.innerHTML = `<td>${name}</td><td>${email}</td><td>${role}</td>
-                         <td><button onclick="deleteUser(this)">Delete</button></td>`;
-
-        // Close modal after adding user
-        closeModal('user-modal');
+        fetch("/users/add/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, role })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            closeModal("user-modal");
+            fetchUsers(); // Refresh table after adding
+            document.getElementById("user_name").value = "";  // Clear form
+            document.getElementById("user_email").value = "";
+            document.getElementById("user_role").value = "user";
+        })
+        .catch(error => console.error("Error adding user:", error));
     } else {
         alert("Please fill all fields!");
     }
 }
 
+
 // Function to delete a user row
-function deleteUser(btn) {
-    let row = btn.parentNode.parentNode;
-    let table = document.getElementById("user-list");
-
-    row.remove(); // Remove the selected row
-
-    // If no users remain, add the placeholder row
-    if (table.rows.length === 0) {
-        table.innerHTML = '<tr><td colspan="4">No users found.</td></tr>';
+function confirmDeleteUser(user_id, btn) {
+    if (confirm("Are you sure you want to delete this user?")) {
+        deleteUser(user_id, btn);
     }
 }
+
+function deleteUser(user_id, btn) {
+    fetch(`/users/delete/${user_id}/`, { method: "DELETE" })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            btn.parentNode.parentNode.remove(); // Remove row from table
+
+            let table = document.getElementById("user-list");
+            if (table.rows.length === 0) {
+                table.innerHTML = '<tr><td colspan="4">No users found.</td></tr>';
+            }
+        })
+        .catch(error => console.error("Error deleting user:", error));
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetchBookings(); // Load bookings when the page loads
+});
+
+function fetchBookings() {
+    fetch("/bookings/")
+        .then(response => response.json())
+        .then(data => {
+            let table = document.getElementById("booking-list");
+            table.innerHTML = ""; // Clear existing table data
+
+            if (data.bookings.length === 0) {
+                table.innerHTML = '<tr><td colspan="5">No bookings found.</td></tr>';
+            } else {
+                data.bookings.forEach(booking => {
+                    let row = table.insertRow();
+                    row.innerHTML = `<td>${booking.user}</td>
+                                     <td>${booking.bus_number}</td>
+                                     <td>${booking.seat_number}</td>
+                                     <td>${booking.status}</td>
+                                     <td>
+                                         <button class="delete-btn" onclick="confirmDeleteBooking(${booking.id}, this)">Delete</button>
+                                     </td>`;
+                });
+            }
+        })
+        .catch(error => console.error("Error fetching bookings:", error));
+}
+
+function confirmDeleteBooking(bookingId, btn) {
+    if (confirm("Are you sure you want to delete this booking?")) {
+        deleteBooking(bookingId, btn);
+    }
+}
+
+function deleteBooking(bookingId, btn) {
+    fetch(`/bookings/delete/${bookingId}/`, { method: "DELETE" })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            btn.closest("tr").remove(); // Remove row from table
+        })
+        .catch(error => console.error("Error deleting booking:", error));
+}
+
 
     </script>
 

@@ -86,17 +86,14 @@
             <div class="profile-container">
                 <div class="profile-info">
                     <label>Full Name:</label>
-                    <input type="text" id="fullname" value="John Doe" disabled>
+                    <input type="text" id="fullname" value="{{ first_name }} {{ last_name }}" disabled>
         
                     <label>Email:</label>
-                    <input type="email" id="email_display" value="johndoe@example.com" disabled>
+                    <input type="email" id="email_display" value="{{ email }}" disabled>
         
                     <label>Phone:</label>
-                    <input type="text" id="phone_display" value="+254700123456" disabled>
+                    <input type="text" id="phone_display" value="{{ phone }}" disabled>
         
-                    <!-- <label>Password:</label>
-                    <input type="password" id="password" value="********" disabled> -->
-
                     <label>Password:</label>
                     <div class="profile-pass-cont">
                         <input type="password" id="password" value="********" disabled>
@@ -104,13 +101,13 @@
                             <i id="toggleIcon" class="fa fa-eye"></i>
                         </span>
                     </div>
-
         
                     <button onclick="enableEditing()" id="editBtn">Edit Profile</button>
                     <button onclick="saveProfile()" id="saveBtn" style="display: none;">Save Changes</button>
                 </div>
             </div>
         </div>
+        
         
         <div id="booking" class="section booking" style="display: none;">
             <h2>Booking</h2>
@@ -156,18 +153,16 @@
             <!-- Back Button -->
             <button id="backToBooking" onclick="backToBooking()"><i class="fa fa-chevron-left"></i>Back to Booking</button>
             <h2>Reserve Your Seat</h2>
-            <p>Select a bus and seat from the available options below.</p>
+            <p>Select a seat from the available options below.</p>
         
             <!-- Bus Selection Form -->
             <form id="reserveForm">
-                <label for="bus_select">Choose a Bus:</label>
-                <select id="bus_select" name="bus" onchange="updateSeatOptions()">
-                    <option value="">Select Bus</option>
-                    <!-- Bus options will be dynamically populated -->
-                </select>
+                {% csrf_token %}
+                <label for="bus_select">Bus:</label>
+                <input type="text" id="bus_select" name="bus" readonly> <!-- Pre-filled and uneditable -->
         
-                <label for="date">Select Date:</label>
-                <input type="date" id="date" name="date" required>
+                <label for="date">Departure Date:</label>
+                <input type="date" id="date" name="date" readonly> <!-- Pre-filled and uneditable -->
         
                 <label for="seats">Choose a Seat:</label>
                 <select id="seats" name="seats" required>
@@ -177,13 +172,8 @@
         
                 <button type="submit">Reserve Seat</button>
             </form>
-        
-            
-        
-            <div id="confirmation" style="display: none;">
-                <p>Your seat has been reserved! Thank you for choosing us.</p>
-            </div>
         </div>
+        
         
 
         <div id="payment" class="section" style="display: none;">
@@ -219,7 +209,10 @@
     </div>
 
     <script>
-        
+        function getCSRFToken() {
+    let csrfToken = document.querySelector("[name=csrfmiddlewaretoken]"); 
+    return csrfToken ? csrfToken.value : "";
+}
 
         document.addEventListener("DOMContentLoaded", function () {
     // Set default active section to Dashboard
@@ -316,7 +309,7 @@ function updateDashboard(data) {
 
     updateTable("recentBookings", data.recentBookings, [
         "trip__bus__bus_number",
-        "trip__route",
+        "trip__route__route_name",  // ✅ Updated to use route name
         "trip__departure_time",
         "booking_date",
         "seat_number",
@@ -360,16 +353,21 @@ function updateTable(tableId, items, keys, emptyMessage, isPayment = false) {
 
 
 
-
-
-// Ensure elements are correctly initialized on page load
+// Load user profile on page load
 window.onload = function () {
+    fetch("/get_profile/")  // Fetch user details via API
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("fullname").value = data.first_name + " " + data.last_name;
+            document.getElementById("email_display").value = data.email;
+            document.getElementById("phone_display").value = data.phone;
+            document.getElementById("password").value = "********"; // Mask password initially
+        })
+        .catch(error => console.error("Error loading profile:", error));
+
     document.getElementById("password").disabled = true;
     let toggleIcon = document.getElementById("toggleIcon");
-
-    toggleIcon.classList.add("disabled"); // Ensure the icon starts disabled
-
-    // Force a re-render to apply the CSS properly
+    toggleIcon.classList.add("disabled");
     toggleIcon.style.color = "lightgrey";
 };
 
@@ -380,52 +378,78 @@ function enableEditing() {
     document.getElementById("phone_display").disabled = false;
     document.getElementById("password").disabled = false;
 
-    // Enable the toggle icon
-    document.getElementById("toggleIcon").classList.remove("disabled");
+    let toggleIcon = document.getElementById("toggleIcon");
+    toggleIcon.classList.remove("disabled");
     toggleIcon.style.color = "#534f4f";
 
-    document.getElementById("saveBtn").style.display = "inline-block";
+    document.getElementById("editBtn").style.display = "none";
+    document.getElementById("saveBtn").style.display = "block";
 }
 
 // Save updated profile
 function saveProfile() {
-    let fullname = document.getElementById("fullname").value;
-    let email = document.getElementById("email_display").value;
-    let phone = document.getElementById("phone_display").value;
+    let fullname = document.getElementById("fullname").value.trim();
+    let email = document.getElementById("email_display").value.trim();
+    let phone = document.getElementById("phone_display").value.trim();
     let passwordInput = document.getElementById("password");
+    let password = passwordInput.value.trim();
     let toggleIcon = document.getElementById("toggleIcon");
 
-    // Simulate saving data (In real scenario, send data to Django backend)
-    alert("Profile updated successfully!");
+    if (fullname === "" || email === "" || phone === "") {
+        alert("Please fill in all required fields.");
+        return;
+    }
 
-    // Disable fields after saving
-    document.getElementById("fullname").disabled = true;
-    document.getElementById("email_display").disabled = true;
-    document.getElementById("phone_display").disabled = true;
-    passwordInput.disabled = true;
+    let nameParts = fullname.split(" ");
+    let first_name = nameParts[0];
+    let last_name = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
 
-    // Force password field back to masked state (password type)
-    passwordInput.type = "password";
+    fetch("/update_profile/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: JSON.stringify({ first_name, last_name, email, phone, password })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Profile updated successfully!");
 
-    // Disable the toggle icon
-    toggleIcon.classList.add("disabled");
-    toggleIcon.classList.remove("fa-eye-slash"); // Ensure correct icon state
-    toggleIcon.classList.add("fa-eye");
+            document.getElementById("fullname").disabled = true;
+            document.getElementById("email_display").disabled = true;
+            document.getElementById("phone_display").disabled = true;
+            passwordInput.disabled = true;
 
-    // Force a re-render to ensure color changes
-    toggleIcon.style.color = "lightgrey";
+            passwordInput.value = "********";
+            passwordInput.type = "password";
 
-    document.getElementById("saveBtn").style.display = "none";
+            toggleIcon.classList.add("disabled");
+            toggleIcon.classList.remove("fa-eye-slash");
+            toggleIcon.classList.add("fa-eye");
+            toggleIcon.style.color = "lightgrey";
+
+            document.getElementById("editBtn").style.display = "block";
+            document.getElementById("saveBtn").style.display = "none";
+        } else {
+            alert("Failed to update profile: " + data.message);
+        }
+    })
+    .catch(error => {
+        alert("Error updating profile. Please try again.");
+        console.error(error);
+    });
 }
-
 
 // Toggle password visibility
 function togglePassword() {
     let passwordInput = document.getElementById("password");
     let toggleIcon = document.getElementById("toggleIcon");
 
-    // Prevent clicking when disabled
-    if (toggleIcon.classList.contains("disabled")) {
+    // Prevent toggling when password is still "********"
+    if (passwordInput.value === "********") {
+        alert("You must enter a new password to view it.");
         return;
     }
 
@@ -441,88 +465,251 @@ function togglePassword() {
 }
 
 
+// Get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(cookie => {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.split('=')[1]);
+            }
+        });
+    }
+    return cookieValue;
+}
+
+
+
 
 
 document.addEventListener("DOMContentLoaded", function () {
-    // Simulate available buses and seats data
-    let buses = [
-        { busNumber: "004", route: "Nairobi - Kisumu", seats: ["1A", "1B", "1C", "2A", "2B"] },
-        { busNumber: "006", route: "Nairobi - Mombasa", seats: ["1A", "1B", "2A", "2C"] }
-    ];
+    // Fetch and populate available buses
+    function fetchAvailableBuses() {
+        fetch("/get_available_buses/")
+            .then(response => response.json())
+            .then(data => {
+                let availableTable = document.getElementById("availableBuses");
+                availableTable.innerHTML = "";  // Clear previous rows
 
-    // Populate the available buses table with "Book Now" buttons
-    let availableTable = document.getElementById("availableBuses");
-    availableTable.innerHTML = "";
-    buses.forEach(bus => {
-        let row = `<tr>
-            <td>${bus.busNumber}</td>
-            <td>${bus.route}</td>
-            <td>2025-02-20 07:00 AM</td> <!-- Simulated time -->
-            <td>${bus.seats.length}</td>
-            <td><button onclick="showReserveForm('${bus.busNumber}')">Book Now</button></td>
-        </tr>`;
-        availableTable.innerHTML += row;
-    });
+                if (data.buses.length === 0) {
+                    availableTable.innerHTML = `<tr><td colspan="5">No available buses.</td></tr>`;
+                } else {
+                    data.buses.forEach(bus => {
+                        let row = `<tr>
+                            <td>${bus.busNumber}</td>
+                            <td>${bus.route}</td>
+                            <td>${bus.departure_time}</td>
+                            <td>${bus.available_seats}</td>
+                            <td><button onclick="showReserveForm('${bus.busNumber}')">Book Now</button></td>
+                        </tr>`;
+                        availableTable.innerHTML += row;
+                    });
+                }
+            })
+            .catch(error => console.error("Error fetching buses:", error));
+    }
+
+    // Fetch and populate user bookings
+    function fetchUserBookings() {
+        fetch("/get_user_bookings/")
+            .then(response => response.json())
+            .then(data => {
+                let bookingsTable = document.getElementById("myBookings");
+                bookingsTable.innerHTML = "";  // Clear previous rows
+
+                if (data.bookings.length === 0) {
+                    bookingsTable.innerHTML = `<tr><td colspan="5">No bookings found.</td></tr>`;
+                } else {
+                    data.bookings.forEach(booking => {
+                        let row = `<tr>
+                            <td>${booking.busNumber}</td>
+                            <td>${booking.route}</td>
+                            <td>${booking.seatNumber}</td>
+                            <td>${booking.status}</td>
+                            <td><button onclick="cancelBooking('${booking.busNumber}', '${booking.seatNumber}')">Cancel</button></td>
+                        </tr>`;
+                        bookingsTable.innerHTML += row;
+                    });
+                }
+            })
+            .catch(error => console.error("Error fetching bookings:", error));
+    }
+
+    // Function to cancel a booking
+    window.cancelBooking = function(busNumber, seatNumber) {
+        if (!confirm("Are you sure you want to cancel this booking?")) return;
+
+        fetch("/cancel_booking/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
+            body: JSON.stringify({ busNumber, seatNumber })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            fetchUserBookings();  // Refresh bookings after cancellation
+            fetchAvailableBuses(); // Refresh available buses after cancellation
+        })
+        .catch(error => console.error("Error canceling booking:", error));
+    };
+
+    // Function to get CSRF token
+    function getCSRFToken() {
+        let tokenElement = document.querySelector("[name=csrfmiddlewaretoken]");
+        return tokenElement ? tokenElement.value : "";
+    }
+
+    
+// Fetch and update available seat options
+window.updateSeatOptions = function(busNumber) {
+    let seatSelect = document.getElementById("seats");
+
+    // Clear existing options
+    seatSelect.innerHTML = '<option value="">Select Seat</option>';
+
+    // Fetch bus capacity separately
+    fetch(`/get_bus_capacity/${busNumber}/`)
+        .then(response => response.json())
+        .then(busData => {
+            if (busData.error) {
+                console.error("Error fetching bus capacity:", busData.error);
+                return;
+            }
+
+            let totalSeats = Array.from({ length: busData.capacity }, (_, i) => i + 1); // Generate all seat numbers
+
+            // Fetch all booked seats for this bus
+            fetch(`/get_booked_seats/${busNumber}/`)
+                .then(response => response.json())
+                .then(bookedData => {
+                    let bookedSeats = bookedData.bookedSeats.map(seat => parseInt(seat)); // Convert to integers
+
+                    let availableSeats = totalSeats.filter(seat => !bookedSeats.includes(seat)); // Remove booked seats
+
+                    // Populate dropdown with only available seats
+                    availableSeats.forEach(seat => {
+                        let option = document.createElement("option");
+                        option.value = seat;
+                        option.textContent = `Seat ${seat}`;
+                        seatSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error("Error fetching booked seats:", error));
+        })
+        .catch(error => console.error("Error fetching bus capacity:", error));
+};
+
+
+
 
     // Show the Reserve Your Seat form when "Book Now" is clicked
-    window.showReserveForm = function(busNumber) {
-        // Hide Available Buses and My Bookings section
-        document.getElementById("booking").style.display = "none";
+window.showReserveForm = function(busNumber) {
+    let bookingSection = document.getElementById("booking");
+    let reserveSeatSection = document.getElementById("reserve-seat");
+    let busSelect = document.getElementById("bus_select");
+    let dateInput = document.getElementById("date");
 
-        // Show the Reserve Your Seat form
-        document.getElementById("reserve-seat").style.display = "block";
+    if (busSelect) {
+        busSelect.value = busNumber; // Set selected bus number in form
+    }
 
-        // Find the selected bus from the available buses
-        let selectedBus = buses.find(bus => bus.busNumber === busNumber);
+    // Fetch available buses and find the selected bus details
+    fetch("/get_available_buses/")
+        .then(response => response.json())
+        .then(data => {
+            let selectedBus = data.buses.find(bus => bus.busNumber === busNumber);
+            if (selectedBus) {
+                dateInput.value = selectedBus.departure_time.split(" ")[0]; // Extract date (YYYY-MM-DD)
+                updateSeatOptions(busNumber); // Fetch available seats for this bus
+            } else {
+                alert("Error: Bus details not found.");
+            }
+        })
+        .catch(error => console.error("Error fetching available buses:", error));
 
-        // Pre-select the bus in the form
-        document.getElementById("bus_select").value = busNumber;
+    // Show the reservation form
+    if (bookingSection && reserveSeatSection) {
+        bookingSection.style.display = "none"; // Hide Available Buses
+        reserveSeatSection.style.display = "block"; // Show Reservation Form
+    }
+};
 
-        // Update the seat options based on the selected bus
-        updateSeatOptions(selectedBus);
-    };
 
-    // Update seat options dynamically based on the selected bus
-    window.updateSeatOptions = function(bus) {
-        let seatSelect = document.getElementById("seats");
-        seatSelect.innerHTML = "<option value=''>Select Seat</option>";  // Clear previous options
-
-        if (bus) {
-            bus.seats.forEach(seat => {
-                let option = document.createElement("option");
-                option.value = seat;
-                option.innerText = seat;
-                seatSelect.appendChild(option);
-            });
-        }
-    };
-
-    // Handle form submission (Reserve Seat)
-    document.getElementById("reserveForm").addEventListener("submit", function (event) {
-        event.preventDefault();  // Prevent form submission to server
-
-        let busName = document.getElementById("bus_select").value;
-        let date = document.getElementById("date").value;
-        let seat = document.getElementById("seats").value;
-
-        if (busName && seat) {
-            // In a real application, send this data to the Django backend
-            alert(`Seat ${seat} has been reserved on ${busName} for ${date}.`);
-            document.getElementById("confirmation").style.display = "block";  // Show confirmation
-        } else {
-            alert("Please select all fields.");
-        }
-    });
+    // Load data on page load
+    fetchAvailableBuses();
+    fetchUserBookings();
 
     // Back to the Booking Section
     window.backToBooking = function() {
-        // Hide Reserve Your Seat form
-        document.getElementById("reserve-seat").style.display = "none";
+        let bookingSection = document.getElementById("booking");
+        let reserveSeatSection = document.getElementById("reserve-seat");
 
-        // Show Available Buses and My Bookings section again
-        document.getElementById("booking").style.display = "block";
+        if (bookingSection && reserveSeatSection) {
+            reserveSeatSection.style.display = "none"; // Hide Reserve Your Seat form
+            bookingSection.style.display = "block"; // Show Available Buses and My Bookings
+        }
     };
 });
+
+function attachReserveFormListener() {
+    let reserveForm = document.getElementById("reserveForm");
+    if (reserveForm) {
+        reserveForm.addEventListener("submit", function (event) {
+            event.preventDefault(); // Prevent page reload
+            console.log("Reserve form submitted!");
+
+            let busNumber = document.getElementById("bus_select").value;
+            let seat = document.getElementById("seats").value;
+            let submitButton = this.querySelector("button[type='submit']");
+
+            if (busNumber && seat) {
+                submitButton.disabled = true;
+                submitButton.textContent = "Submitting...";
+                submitButton.style.opacity = "0.7";
+                submitButton.style.cursor = "not-allowed";
+
+                fetch("/reserve_seat/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
+                    body: JSON.stringify({ busNumber, seatNumber: seat })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Seat reserved temporarily. Please proceed with payment.");
+                        document.getElementById("reserve-seat").style.display = "none";
+                        document.getElementById("payment").style.display = "block";
+                        document.getElementById("booking_id").value = data.booking_id;
+                        document.getElementById("bus_display").value = `Ena Coach - ${data.route}`;
+                        document.getElementById("fare").value = data.fare;
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => console.error("Error reserving seat:", error))
+                .finally(() => {
+                    submitButton.disabled = false;
+                    submitButton.textContent = "Reserve Seat";
+                    submitButton.style.opacity = "1";
+                    submitButton.style.cursor = "pointer";
+                });
+            } else {
+                alert("Please select all fields.");
+            }
+        });
+    } else {
+        console.error("Error: reserveForm element not found!");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    attachReserveFormListener();
+    
+});
+
+
+
 
 
 function confirmLogout() {

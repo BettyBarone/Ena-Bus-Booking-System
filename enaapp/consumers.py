@@ -34,16 +34,32 @@ class DashboardConsumer(AsyncWebsocketConsumer):
             await self.send(json.dumps({"type": "pong"}))  # Keep-alive response
 
     async def send_dashboard_data(self):
-        """Fetch and send dashboard data to the frontend"""
+        """Fetch and send updated dashboard data to the frontend."""
         total_bookings = await sync_to_async(Booking.objects.filter(user=self.user).count)()
-        upcoming_trips = await sync_to_async(Booking.objects.filter(user=self.user, status="Upcoming").count)()
-        total_payments = await sync_to_async(lambda: Payment.objects.filter(user=self.user).aggregate(total_amount=Sum("amount"))["total_amount"] or 0)()
+
+        # ✅ Update upcoming trips logic to check Trip table for actual upcoming trips
+        upcoming_trips = await sync_to_async(lambda: Booking.objects.filter(
+            user=self.user,
+            trip__status="Upcoming",  # Check the Trip table status
+            trip__departure_date__gte=datetime.today()  # Ensure the trip is still in the future
+        ).count())()
+
+        total_payments = await sync_to_async(lambda: Payment.objects.filter(user=self.user).aggregate(
+            total_amount=Sum("amount")
+        )["total_amount"] or 0)()
 
         recent_bookings = await sync_to_async(lambda: list(
             Booking.objects.filter(user=self.user)
-            .select_related("trip", "trip__bus")
+            .select_related("trip", "trip__bus", "trip__route")  # ✅ Added trip__route for route_name
             .order_by("-booking_date")[:5]
-            .values("trip__bus__bus_number", "trip__route", "trip__departure_time", "seat_number", "status", "booking_date")
+            .values(
+                "trip__bus__bus_number", 
+                "trip__route__route_name",  # ✅ Fetch route name correctly
+                "trip__departure_time", 
+                "seat_number", 
+                "status", 
+                "booking_date"
+            )
         ))()
 
         recent_payments = await sync_to_async(lambda: list(
@@ -52,7 +68,7 @@ class DashboardConsumer(AsyncWebsocketConsumer):
             .values("amount", "mpesa_transaction_id", "status", "transaction_date")
         ))()
 
-        # Convert datetime fields to a readable format
+        # Convert datetime fields to readable format
         for booking in recent_bookings:
             booking["trip__departure_time"] = booking["trip__departure_time"].strftime("%H:%M:%S")
             booking["booking_date"] = booking["booking_date"].strftime("%Y-%m-%d")
@@ -62,7 +78,7 @@ class DashboardConsumer(AsyncWebsocketConsumer):
 
         await self.send(json.dumps({
             "totalBookings": total_bookings,
-            "upcomingTrips": upcoming_trips,
+            "upcomingTrips": upcoming_trips,  # ✅ Now correctly updating based on Trip table
             "totalPayments": round(total_payments, 2),
             "recentBookings": recent_bookings,
             "recentPayments": recent_payments,

@@ -22,6 +22,7 @@
     {% endif %}
     <form action="{% url 'register' %}" method="POST" onsubmit="disableRegisterButton()">
         {% csrf_token %}
+        <p>Please fill in your details below to Register</p>
         
         <label for="firstname">First Name:</label>
         <input type="text" name="firstname" placeholder="Enter your first name" required>

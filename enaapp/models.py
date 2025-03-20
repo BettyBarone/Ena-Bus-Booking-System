@@ -1,7 +1,8 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.conf import settings
-from django.utils.timezone import now 
+from datetime import datetime, timedelta
+from django.utils.timezone import now, make_aware, is_naive
 
 
 class CustomUserManager(BaseUserManager):
@@ -51,47 +52,102 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.username if self.username else self.email
     
+class Route(models.Model):
+    """Model representing a bus route."""
+    departure = models.CharField(max_length=100)
+    arrival = models.CharField(max_length=100)
+    route_name = models.CharField(max_length=255, unique=True, blank=True)  # Automatically generated
+    fare = models.DecimalField(max_digits=10, decimal_places=2, default=1500.00)  # Default fare set to Ksh 1500
+
+    def save(self, *args, **kwargs):
+        """Automatically generate route_name before saving."""
+        self.route_name = f"{self.departure} - {self.arrival}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.route_name} - Ksh {self.fare}"
+
+
+    
 
 class Bus(models.Model):
     """Model representing a bus."""
     bus_number = models.CharField(max_length=20, unique=True)
-    route = models.CharField(max_length=100)
+    route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name="buses")  # Use FK for data integrity
     capacity = models.PositiveIntegerField()
 
     class Meta:
-        verbose_name_plural = "Buses"  # Correct pluralization
+        verbose_name_plural = "Buses"
 
     def __str__(self):
         return f"{self.bus_number} - {self.route}"
 
 class Trip(models.Model):
     """Model representing a bus trip (schedule)."""
-    bus = models.ForeignKey(Bus, on_delete=models.CASCADE, related_name="trips")
-    route = models.CharField(max_length=255, default="Nairobi to Mombasa")  # Set default route
-    departure_time = models.TimeField()
+
+    STATUS_CHOICES = [
+        ("Upcoming", "Upcoming"),
+        ("Ongoing", "Ongoing"),
+        ("Completed", "Completed"),
+    ]
+
+    bus = models.ForeignKey("Bus", on_delete=models.CASCADE, related_name="trips")
+    route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name="trips")  # FK reference
     departure_date = models.DateField()
-    available_seats = models.PositiveIntegerField()
+    departure_time = models.TimeField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Upcoming")
+
+    def update_status(self):
+        """Update trip status based on the current date and time."""
+        current_time = now()  # Current timezone-aware datetime
+        trip_datetime = datetime.combine(self.departure_date, self.departure_time)
+
+        if is_naive(trip_datetime):
+            trip_datetime = make_aware(trip_datetime)
+
+        trip_end_time = trip_datetime + timedelta(hours=8)
+
+        if trip_datetime > current_time:
+            return "Upcoming"
+        elif trip_datetime <= current_time < trip_end_time:
+            return "Ongoing"
+        else:
+            return "Completed"
+
+    def save(self, *args, **kwargs):
+        """Ensure status is updated before saving."""
+        self.status = self.update_status()
+        super().save(*args, **kwargs)
+
+    @property
+    def available_seats(self):
+        """Calculate available seats based on booked seats."""
+        booked_seats = self.bookings.count()
+        return self.bus.capacity - booked_seats
 
     def __str__(self):
-        return f"{self.bus.bus_number} - {self.route} - {self.departure_date} {self.departure_time}"
+        return f"Trip {self.id}: {self.bus.bus_number} - {self.route} - {self.departure_date} {self.departure_time} - {self.status}"
 
 
+class Booking(models.Model):
+    """Model representing a user's booking."""
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("confirmed", "Confirmed"),
+        ("cancelled", "Cancelled"),
+    ]
 
-class Booking(models.Model):  
-    """Model representing a user's booking."""  
-    STATUS_CHOICES = [  
-        ("pending", "Pending"),  
-        ("confirmed", "Confirmed"),  
-    ]  
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bookings")
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="bookings")
+    seat_number = models.PositiveIntegerField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    booking_date = models.DateTimeField(default=now)
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bookings")  
-    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="bookings")  
-    seat_number = models.CharField(max_length=5)  
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")  
-    booking_date = models.DateTimeField(default=now)  # Use default instead of auto_now_add=True  
+    class Meta:
+        unique_together = ("trip", "seat_number")  # Ensure no duplicate seats for the same trip
 
-    def __str__(self):  
-        return f"Booking {self.id} - {self.user.email} - {self.trip.bus.bus_number} - Seat {self.seat_number}"  
+    def __str__(self):
+        return f"Booking {self.id} - {self.user.email} - Seat {self.seat_number}"
 
 
 class Payment(models.Model):
@@ -110,16 +166,3 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment {self.mpesa_transaction_id} - {self.user.email} - KES {self.amount}"
-
-
-class Seat(models.Model):
-    """Model representing an individual seat in a trip."""
-    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="seats")
-    seat_number = models.CharField(max_length=5)
-    is_booked = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"{self.seat_number} - {self.trip.bus.bus_number} ({'Booked' if self.is_booked else 'Available'})"
-
-    class Meta:
-        unique_together = ("trip", "seat_number")

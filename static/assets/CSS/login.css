@@ -18,6 +18,10 @@ h2 {
     
 }
 
+p {
+    text-align: center;
+}
+
 /* Tab Navigation */
 .tab {
     margin-top: 1rem;

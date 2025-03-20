@@ -321,10 +321,18 @@ button:hover {
     border-radius: 5px;
     width: 99%;
 }
+#reserve-seat input {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 95%;
+}
 
 #reserve-seat input[type="date"] {
     cursor: pointer;
     width: 95.5%;
+    font: inherit;
 }
 
 #reserve-seat button[type="submit"] {
