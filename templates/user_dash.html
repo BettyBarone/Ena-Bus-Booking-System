@@ -174,28 +174,44 @@
             </form>
         </div>
         
+        <div id="receiptModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeReceiptModal()">&times;</span>
+                <h2>Payment Receipt</h2>
+                <p><strong>Transaction ID:</strong> <span id="transactionId"></span></p>
+                <p><strong>Booking ID:</strong> <span id="receiptBookingId"></span></p>
+                <p><strong>Phone Number:</strong> <span id="receiptPhone"></span></p>
+                <p><strong>Amount Paid:</strong> <span id="receiptAmount"></span></p>
+                <button onclick="downloadReceipt()">Download Receipt (PDF)</button>
+            </div>
+        </div>
+        
         
 
         <div id="payment" class="section" style="display: none;">
             <h2>Complete Your Payment</h2>
         
             <!-- Payment Form -->
-            <form action="process_payment.php" method="POST">
+            <form id="paymentForm" action="{% url 'process_payment' %}" method="POST">
+                {% csrf_token %}
+
                 <label for="name">Full Name:</label>
-                <input type="text" id="name" name="name" required>
+                <input type="text" id="name" name="name" required readonly>
         
                 <label for="email_input">Email:</label>
-                <input type="email" id="email_input" name="email" required>
+                <input type="email" id="email_input" name="email" required readonly>
         
                 <label for="phone_input">Phone Number:</label>
-                <input type="tel" id="phone_input" name="phone" placeholder="07XXXXXXXX" required>
+                <input type="tel" id="phone_input" name="phone" placeholder="07XXXXXXXX" required readonly>
         
                 <label for="booking_id">Booking ID:</label>
                 <input type="text" id="booking_id" name="booking_id" value="BK123456" readonly>
-        
-                <label for="bus_display">Bus Name & Route:</label>
-                <input type="text" id="bus_display" name="bus" value="Ena Coach - Nairobi to Mombasa" readonly>
-        
+                <!-- <label for="bus_route">Bus Route:</label>
+                <input type="text" id="bus_route" name="bus_route" value="Nairobi - Mombasa" readonly> -->
+                <label for="bus_route">Bus Route:</label>
+                <select id="bus_route" name="bus_route" required>
+                    <option value="">-- Select Route --</option> 
+                </select>
                 <label for="fare">Total Fare (KES):</label>
                 <input type="text" id="fare" name="fare" value="1500" readonly>
         
@@ -207,6 +223,10 @@
         </div>
         
     </div>
+
+    {{ routes|json_script:"routes-data" }}
+    
+    
 
     <script>
         function getCSRFToken() {
@@ -305,11 +325,14 @@ function isUserLoggedIn() {
 function updateDashboard(data) {
     document.getElementById("totalBookings").textContent = data.totalBookings || 0;
     document.getElementById("upcomingTrips").textContent = data.upcomingTrips || 0;
-    document.getElementById("totalPayments").textContent = "Ksh " + (data.totalPayments || 0).toFixed(2);
+    
+    // Ensure totalPayments is a valid number before calling toFixed
+    let totalPayments = parseFloat(data.totalPayments) || 0;
+    document.getElementById("totalPayments").textContent = "Ksh " + totalPayments.toFixed(2);
 
     updateTable("recentBookings", data.recentBookings, [
         "trip__bus__bus_number",
-        "trip__route__route_name",  // ✅ Updated to use route name
+        "trip__route__route_name",
         "trip__departure_time",
         "booking_date",
         "seat_number",
@@ -481,34 +504,42 @@ function getCookie(name) {
 
 
 
-
-
 document.addEventListener("DOMContentLoaded", function () {
     // Fetch and populate available buses
     function fetchAvailableBuses() {
-        fetch("/get_available_buses/")
-            .then(response => response.json())
-            .then(data => {
-                let availableTable = document.getElementById("availableBuses");
-                availableTable.innerHTML = "";  // Clear previous rows
+    fetch("/get_available_buses/")
+        .then(response => response.json())
+        .then(data => {
+            let availableTable = document.getElementById("availableBuses");
+            availableTable.innerHTML = "";  // Clear previous rows
 
-                if (data.buses.length === 0) {
-                    availableTable.innerHTML = `<tr><td colspan="5">No available buses.</td></tr>`;
-                } else {
-                    data.buses.forEach(bus => {
-                        let row = `<tr>
-                            <td>${bus.busNumber}</td>
-                            <td>${bus.route}</td>
-                            <td>${bus.departure_time}</td>
-                            <td>${bus.available_seats}</td>
-                            <td><button onclick="showReserveForm('${bus.busNumber}')">Book Now</button></td>
-                        </tr>`;
-                        availableTable.innerHTML += row;
-                    });
-                }
-            })
-            .catch(error => console.error("Error fetching buses:", error));
-    }
+            if (!data.buses || !Array.isArray(data.buses)) {
+                console.error("Invalid response format:", data);
+                availableTable.innerHTML = `<tr><td colspan="5">Error loading available buses.</td></tr>`;
+                return;
+            }
+
+            if (data.buses.length === 0) {
+                availableTable.innerHTML = `<tr><td colspan="5">No available buses.</td></tr>`;
+            } else {
+                data.buses.forEach(bus => {
+                    let row = `<tr>
+                        <td>${bus.busNumber}</td>
+                        <td>${bus.route}</td>
+                        <td>${bus.departure_time}</td>
+                        <td>${bus.available_seats}</td>
+                        <td><button onclick="showReserveForm('${bus.busNumber}')">Book Now</button></td>
+                    </tr>`;
+                    availableTable.innerHTML += row;
+                });
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching buses:", error);
+            let availableTable = document.getElementById("availableBuses");
+            availableTable.innerHTML = `<tr><td colspan="5">Failed to load buses.</td></tr>`;
+        });
+}
 
     // Fetch and populate user bookings
     function fetchUserBookings() {
@@ -652,6 +683,12 @@ window.showReserveForm = function(busNumber) {
     };
 });
 
+const userData = {
+    full_name: "{{ full_name }}",
+    email: "{{ email }}",
+    phone: "{{ phone }}"
+};
+
 function attachReserveFormListener() {
     let reserveForm = document.getElementById("reserveForm");
     if (reserveForm) {
@@ -680,9 +717,31 @@ function attachReserveFormListener() {
                         alert("Seat reserved temporarily. Please proceed with payment.");
                         document.getElementById("reserve-seat").style.display = "none";
                         document.getElementById("payment").style.display = "block";
+
+                        // Prefill user details
                         document.getElementById("booking_id").value = data.booking_id;
-                        document.getElementById("bus_display").value = `Ena Coach - ${data.route}`;
+                        document.getElementById("bus_route").value = data.route;
                         document.getElementById("fare").value = data.fare;
+                        
+                        if (data.full_name) {
+                            document.getElementById("name").value = data.full_name;
+                        }
+                        if (data.email) {
+                            document.getElementById("email_input").value = data.email;
+                        }
+                        if (data.phone) {
+                            document.getElementById("phone_input").value = data.phone;
+                            document.getElementById("mpesa_number").value = data.phone; // Default to user's phone
+                        }
+
+                        // Ensure only M-Pesa number is editable
+                        document.getElementById("name").readOnly = true;
+                        document.getElementById("email_input").readOnly = true;
+                        document.getElementById("phone_input").readOnly = true;
+                        document.getElementById("booking_id").readOnly = true;
+                        // Disable the bus_route dropdown so users can't change it
+                        document.getElementById("bus_route").disabled = true;
+                        document.getElementById("fare").readOnly = true;
                     } else {
                         alert(data.message);
                     }
@@ -703,10 +762,353 @@ function attachReserveFormListener() {
     }
 }
 
+
 document.addEventListener("DOMContentLoaded", function () {
     attachReserveFormListener();
-    
+    let paymentForm = document.getElementById("paymentForm");
+    if (paymentForm) {
+        paymentForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            let bookingId = document.getElementById("booking_id").value;
+            let mpesaNumber = document.getElementById("mpesa_number").value;
+            let submitButton = this.querySelector("button[type='submit']");
+
+            if (bookingId && mpesaNumber) {
+                submitButton.disabled = true;
+                submitButton.textContent = "Processing...";
+                submitButton.style.opacity = "0.7";
+                submitButton.style.cursor = "not-allowed";
+
+                fetch("/make_payment/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
+                    body: JSON.stringify({ bookingId, mpesaNumber })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Payment request sent. Please check your M-Pesa phone for confirmation.");
+
+                        // Wait 1 minute before displaying receipt
+                        waitForPaymentConfirmation(bookingId, mpesaNumber, data.amount);
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => console.error("Error processing payment:", error))
+                .finally(() => {
+                    submitButton.disabled = false;
+                    submitButton.textContent = "Pay Now";
+                    submitButton.style.opacity = "1";
+                    submitButton.style.cursor = "pointer";
+                });
+            } else {
+                alert("Please enter all required details.");
+            }
+        });
+    }
 });
+
+
+function waitForPaymentConfirmation(bookingId, phone, amount) {
+    let attempts = 0; // Track attempts
+    let maxAttempts = 6; // 6 attempts (10 sec interval = 1 minute)
+
+    function checkPayment() {
+        fetch(`/check_payment_status/${bookingId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.status === "completed") {
+                    showReceiptModal(bookingId, phone, data.amount, data.transactionId);
+                } else {
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(checkPayment, 10000); // Retry after 10 sec
+                    } else {
+                        alert("Payment verification timeout. If payment was made, refresh the page to check status.");
+                    }
+                }
+            })
+            .catch(error => console.error("Error checking payment status:", error));
+    }
+
+    setTimeout(checkPayment, 10000); // Start checking after 10 sec
+}
+
+function showReceiptModal(bookingId, phone, amount, transactionId) {
+    document.getElementById("transactionId").textContent = transactionId;
+    document.getElementById("receiptBookingId").textContent = bookingId;
+    document.getElementById("receiptPhone").textContent = phone;
+    document.getElementById("receiptAmount").textContent = amount;
+
+    document.getElementById("receiptModal").style.display = "block";
+}
+
+
+function closeReceiptModal() {
+    document.getElementById("payment").style.display = "block";
+    document.getElementById("receiptModal").style.display = "none";
+    
+}
+
+function downloadReceipt() {
+    let bookingId = document.getElementById("receiptBookingId").textContent;
+    window.open(`/generate_receipt/${bookingId}/`, "_blank");
+}
+
+    
+function getCSRFToken() {
+    let csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+    return csrfToken ? csrfToken.split('=')[1] : '';
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    try {
+        const routesElement = document.getElementById("routes-data");
+        if (!routesElement) {
+            console.error("Error: Routes data element is missing!");
+            return;
+        }
+
+        const routesData = JSON.parse(routesElement.textContent || "[]");
+        console.log("Loaded Routes Data:", routesData);
+
+        document.getElementById("name").value = "{{ full_name }}";
+        document.getElementById("email_input").value = "{{ email }}";
+        document.getElementById("phone_input").value = "{{ phone }}";
+        document.getElementById("booking_id").value = "{{ next_booking_id }}";
+        document.getElementById("mpesa_number").value = "{{ phone }}";
+
+        const busRouteDropdown = document.getElementById("bus_route");
+        if (!busRouteDropdown) {
+            console.error("Error: Bus route dropdown is missing!");
+            return;
+        }
+
+        busRouteDropdown.innerHTML = '<option value="">-- Select Route --</option>';
+
+        if (!routesData || routesData.length === 0) {
+            let option = document.createElement("option");
+            option.value = "";
+            option.textContent = "No available routes";
+            option.disabled = true;
+            busRouteDropdown.appendChild(option);
+        } else {
+            routesData.forEach(route => {
+                let option = document.createElement("option");
+                option.value = route.route_name;
+                option.textContent = route.route_name;
+                option.setAttribute("data-fare", route.fare);
+                busRouteDropdown.appendChild(option);
+            });
+        }
+
+        busRouteDropdown.addEventListener("change", function () {
+            let selectedOption = busRouteDropdown.options[busRouteDropdown.selectedIndex];
+            let fare = selectedOption.getAttribute("data-fare") || 0;
+            document.getElementById("fare").value = fare;
+        });
+
+        // attachPaymentFormListener(); // First step
+        // attachReserveFormListener2(); // Second step
+    } catch (error) {
+        console.error("Error loading routes data:", error);
+    }
+});
+
+// **Step 1: Attach Listener to First Payment Submission**
+// function attachPaymentFormListener() {
+//     let paymentForm = document.getElementById("paymentForm");
+//     if (paymentForm) {
+//         paymentForm.addEventListener("submit", function (event) {
+//             event.preventDefault();
+//             console.log("Processing initial payment step...");
+
+//             let submitButton = this.querySelector("button[type='submit']");
+//             let bookingId = document.getElementById("booking_id").value;
+//             let mpesaNumber = document.getElementById("mpesa_number").value;
+//             let selectedRoute = document.getElementById("bus_route").value;
+
+//             if (!mpesaNumber || !selectedRoute) {
+//                 alert("Please provide an M-Pesa number and select a route.");
+//                 return;
+//             }
+
+//             submitButton.disabled = true;
+//             submitButton.textContent = "Processing...";
+//             submitButton.style.opacity = "0.7";
+//             submitButton.style.cursor = "not-allowed";
+
+//             fetch("/process_payment/", {
+//                 method: "POST",
+//                 headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
+//                 body: JSON.stringify({ bookingId, mpesaNumber, selectedRoute })
+//             })
+//             .then(response => response.json())
+//             .then(data => {
+//                 if (data.success) {
+//                     alert("Proceed to select your seat before making payment.");
+                    
+//                     document.getElementById("payment").style.display = "none";
+//                     showReserveForm(data.busNumber, data.departureDate, data.availableSeats);
+//                 } else {
+//                     alert(data.message);
+//                 }
+//             })
+//             .catch(error => console.error("Error processing payment:", error))
+//             .finally(() => {
+//                 submitButton.disabled = false;
+//                 submitButton.textContent = "Proceed to Payment";
+//                 submitButton.style.opacity = "1";
+//                 submitButton.style.cursor = "pointer";
+//             });
+//         });
+//     } else {
+//         console.error("Error: paymentForm element not found!");
+//     }
+// }
+
+// **Step 2: Attach Listener to Seat Reservation Submission**
+// function attachReserveFormListener2() {
+//     let reserveForm = document.getElementById("reserveForm");
+//     if (reserveForm) {
+//         reserveForm.addEventListener("submit", function (event) {
+//             event.preventDefault();
+//             console.log("Reserving seat...");
+
+//             let busNumber = document.getElementById("bus_select").value;
+//             let seat = document.getElementById("seats").value;
+//             let submitButton = this.querySelector("button[type='submit']");
+
+//             if (!busNumber || !seat) {
+//                 alert("Please select a bus and an available seat.");
+//                 return;
+//             }
+
+//             submitButton.disabled = true;
+//             submitButton.textContent = "Reserving...";
+//             submitButton.style.opacity = "0.7";
+//             submitButton.style.cursor = "not-allowed";
+
+//             fetch("/reserve_seat2/", {
+//                 method: "POST",
+//                 headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
+//                 body: JSON.stringify({ busNumber, seatNumber: seat })
+//             })
+//             .then(response => response.json())
+//             .then(data => {
+//                 if (data.success) {
+//                     alert("Seat reserved successfully. Proceed with payment.");
+
+//                     // Store the booking ID for payment processing
+//                     document.getElementById("booking_id").value = data.booking_id;
+
+//                     // Show payment form again for final payment submission
+//                     document.getElementById("reserve-seat").style.display = "none";
+//                     document.getElementById("payment").style.display = "block";
+
+//                     // Attach final payment submission
+//                     attachFinalPaymentListener();
+//                 } else {
+//                     alert(data.message);
+//                 }
+//             })
+//             .catch(error => console.error("Error reserving seat:", error))
+//             .finally(() => {
+//                 submitButton.disabled = false;
+//                 submitButton.textContent = "Reserve Seat";
+//                 submitButton.style.opacity = "1";
+//                 submitButton.style.cursor = "pointer";
+//             });
+//         });
+//     } else {
+//         console.error("Error: reserveForm element not found!");
+//     }
+// }
+
+// **Step 3: Attach Listener to Final Payment Submission**
+// function attachFinalPaymentListener() {
+//     let paymentForm = document.getElementById("paymentForm");
+//     if (paymentForm) {
+//         paymentForm.addEventListener("submit", function (event) {
+//             event.preventDefault();
+//             console.log("Processing final payment...");
+
+//             let submitButton = this.querySelector("button[type='submit']");
+//             let bookingId = document.getElementById("booking_id").value;
+//             let mpesaNumber = document.getElementById("mpesa_number").value;
+
+//             if (!bookingId || !mpesaNumber) {
+//                 alert("Missing booking ID or M-Pesa number.");
+//                 return;
+//             }
+
+//             submitButton.disabled = true;
+//             submitButton.textContent = "Processing...";
+//             submitButton.style.opacity = "0.7";
+//             submitButton.style.cursor = "not-allowed";
+
+//             fetch("/make_payment/", {
+//                 method: "POST",
+//                 headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
+//                 body: JSON.stringify({ bookingId, mpesaNumber })
+//             })
+//             .then(response => response.json())
+//             .then(data => {
+//                 if (data.success) {
+//                     alert("Payment initiated. Please check your phone to complete payment.");
+//                 } else {
+//                     alert("Payment failed: " + data.message);
+//                 }
+//             })
+//             .catch(error => console.error("Error processing payment:", error))
+//             .finally(() => {
+//                 submitButton.disabled = false;
+//                 submitButton.textContent = "Complete Payment";
+//                 submitButton.style.opacity = "1";
+//                 submitButton.style.cursor = "pointer";
+//             });
+//         });
+//     } else {
+//         console.error("Error: paymentForm element not found!");
+//     }
+// }
+
+
+function showReserveForm(busNumber, departureDate, availableSeats) {
+    document.getElementById("reserve-seat").style.display = "block";
+    document.getElementById("bus_select").value = busNumber;
+    document.getElementById("departure_date").textContent = departureDate;
+    document.getElementById("payment").style.display = "none";
+
+    let seatsDropdown = document.getElementById("seats");
+    seatsDropdown.innerHTML = "";
+
+    if (!availableSeats || availableSeats.length === 0) {
+        let option = document.createElement("option");
+        option.value = "";
+        option.textContent = "No available seats";
+        option.disabled = true;
+        seatsDropdown.appendChild(option);
+    } else {
+        availableSeats.forEach(seat => {
+            let option = document.createElement("option");
+            option.value = seat;
+            option.textContent = `Seat ${seat}`;
+            seatsDropdown.appendChild(option);
+        });
+    }
+}
+
+
+
+
+
+
+
+
+
 
 
 

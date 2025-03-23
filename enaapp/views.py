@@ -15,8 +15,13 @@ from .models import Bus, Booking, Trip, Payment, Route
 from django.utils.timezone import now
 from datetime import datetime
 from django.db.models import Sum 
-
-
+from django.db.models import Exists, OuterRef, Max
+from django.db import IntegrityError
+from .mpesa_credentials import MpesaAccessToken, LipanaMpesaPpassword
+import requests
+from django.http import FileResponse
+from reportlab.pdfgen import canvas
+import io
 
 
 
@@ -275,9 +280,29 @@ def admin_logout(request):
     logout(request)
     return redirect(reverse("admin_login"))
 
+
+@login_required
 def user_dash(request):
-    if not request.user.is_authenticated:  # Ensure user is logged in
-        return redirect(reverse("user_login"))
+    if not request.user.is_authenticated:
+        return redirect("user_login")
+
+    # Determine full name
+    full_name = request.user.username if request.user.is_superuser else f"{request.user.first_name} {request.user.last_name}".strip()
+
+    # Get the next available booking ID (as integer, no formatting)
+    next_booking_id = Booking.objects.aggregate(next_id=Max("id"))["next_id"]
+    next_booking_id = (next_booking_id or 0) + 1  # Increment for next ID
+
+    # Get routes with available upcoming trips
+    upcoming_trips = Trip.objects.filter(
+        departure_date__gt=now().date()
+    ) | Trip.objects.filter(
+        departure_date=now().date(), departure_time__gt=now().time()
+    )
+
+    available_routes = list(Route.objects.filter(
+        Exists(upcoming_trips.filter(route=OuterRef("pk")))
+    ).values("route_name", "fare"))  # Convert QuerySet to list
 
     # Pass user details to the template
     context = {
@@ -285,9 +310,14 @@ def user_dash(request):
         "last_name": request.user.last_name,
         "email": request.user.email,
         "phone": request.user.phone,
+        "full_name": full_name,
+        "next_booking_id": next_booking_id,  # Return booking ID as is (integer)
+        "routes": available_routes  # Ensure it's a JSON-serializable list
     }
-    
-    return render(request, 'user_dash.html', context)
+
+    return render(request, "user_dash.html", context)
+
+
 
 @csrf_protect
 @login_required
@@ -345,23 +375,47 @@ def get_profile(request):
 @login_required
 def get_available_buses(request):
     try:
-        # Fetch only upcoming trips
-        trips = Trip.objects.filter(status="Upcoming")
+        current_time = now()  # Get current time
 
-        data = [
-            {
-                "busNumber": trip.bus.bus_number,
-                "route": trip.route.route_name,
-                "departure_time": datetime.combine(trip.departure_date, trip.departure_time).strftime("%Y-%m-%d %I:%M %p"),
-                "available_seats": trip.available_seats,
-            }
-            for trip in trips
-        ]
+        # Fetch all trips that should be updated
+        trips = Trip.objects.filter(status__in=["Upcoming", "Ongoing"])
+
+        # Update statuses dynamically
+        for trip in trips:
+            new_status = trip.update_status()  # Call update_status() without 'save'
+            if trip.status != new_status:
+                trip.status = new_status
+                trip.save()  # Explicitly save if status has changed
+
+        # Get only trips that are still available for booking
+        upcoming_trips = Trip.objects.filter(
+            departure_date__gt=current_time.date()  # Future trips
+        ) | Trip.objects.filter(
+            departure_date=current_time.date(), departure_time__gt=current_time.time()  # Trips later today
+        )
+
+        # Ensure the queryset is not empty
+        if not upcoming_trips.exists():
+            return JsonResponse({"buses": []})  # Return an empty list instead of an error
+
+        data = []
+        for trip in upcoming_trips:
+            try:
+                data.append({
+                    "busNumber": trip.bus.bus_number,
+                    "route": trip.route.route_name,
+                    "departure_time": datetime.combine(trip.departure_date, trip.departure_time).strftime("%Y-%m-%d %I:%M %p"),
+                    "available_seats": trip.available_seats,
+                })
+            except Exception as e:
+                return JsonResponse({"error": f"Data processing error: {str(e)}"}, status=500)
 
         return JsonResponse({"buses": data})
-    
+
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        return JsonResponse({"error": f"Server error: {str(e)}"}, status=500)
+
+    
 # Fetch user bookings
 @login_required
 def get_user_bookings(request):
@@ -394,7 +448,7 @@ def get_booked_seats(request, bus_number):
     except Bus.DoesNotExist:
         return JsonResponse({"error": "Bus not found"}, status=404)
 
-@csrf_exempt  # Only use if you handle CSRF via tokens
+@csrf_exempt  # Only use if you handle CSRF via tokens 
 @login_required
 def cancel_booking(request):
     if request.method == "POST":
@@ -403,10 +457,16 @@ def cancel_booking(request):
             bus_number = data.get("busNumber")
             seat_number = data.get("seatNumber")
 
-            # Find the booking
-            booking = Booking.objects.filter(user=request.user, bus__bus_number=bus_number, seat_number=seat_number).first()
+            # Find the booking using the trip's bus
+            booking = Booking.objects.filter(
+                user=request.user, 
+                trip__bus__bus_number=bus_number,  # Correct lookup path
+                seat_number=seat_number
+            ).first()
+
             if booking:
-                booking.delete()
+                booking.delete()  # Cancel the booking
+                
                 return JsonResponse({"success": True, "message": "Booking canceled successfully."})
             else:
                 return JsonResponse({"success": False, "message": "Booking not found!"})
@@ -424,70 +484,321 @@ def reserve_seat(request):
             bus_number = data.get("busNumber")
             seat_number = data.get("seatNumber")
 
+            if not bus_number or not seat_number:
+                return JsonResponse({"success": False, "message": "Bus number and seat number are required!"})
+
             # ✅ Get the trip using bus_number
             trip = Trip.objects.filter(bus__bus_number=bus_number, status="Upcoming").first()
             if not trip:
                 return JsonResponse({"success": False, "message": "Trip not found for the given bus!"})
 
-            # ✅ Check if seat is available in this trip (not bus)
-            if Booking.objects.filter(trip=trip, seat_number=seat_number, status="confirmed").exists():
-                return JsonResponse({"success": False, "message": "Seat already booked!"})
+            # ✅ Check if seat is already reserved or booked
+            existing_booking = Booking.objects.filter(trip=trip, seat_number=seat_number).first()
+            if existing_booking:
+                if existing_booking.status == "confirmed":
+                    return JsonResponse({"success": False, "message": "This seat is already booked!"})
+                elif existing_booking.status == "pending":
+                    return JsonResponse({"success": False, "message": "This seat is temporarily reserved! Complete payment to confirm it."})
+
 
             # ✅ Create a pending booking (use trip instead of bus)
             booking = Booking.objects.create(
                 user=request.user, 
-                trip=trip,  # ✅ Corrected from 'bus' to 'trip'
+                trip=trip,  
                 seat_number=seat_number, 
                 status="pending"
             )
+
+            # ✅ Get user details
+            full_name = request.user.get_full_name() or request.user.username  # Fallback to username
+            email = request.user.email
+            phone = getattr(request.user, "phone", "")  # Safer way to get phone attribute
 
             return JsonResponse({
                 "success": True,
                 "message": f"Seat {seat_number} reserved temporarily! Please complete payment.",
                 "booking_id": booking.id,
-                "route": trip.route.route_name,  # Adjust according to your model
-                "fare": trip.route.fare  # Adjust based on how you store fares
+                "route": trip.route.route_name,  # Ensure correct route retrieval
+                "fare": trip.route.fare,  # Ensure correct fare retrieval
+                "full_name": full_name,
+                "email": email,
+                "phone": phone
             })
+
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "message": "Invalid JSON data!"})
+
+        except IntegrityError:
+            return JsonResponse({"success": False, "message": "This seat is already booked!"})
 
         except Exception as e:
             return JsonResponse({"success": False, "message": str(e)})
 
     return JsonResponse({"success": False, "message": "Invalid request!"})
+    
+
 
 
 @login_required
+@csrf_exempt  # Remove this in production!
 def process_payment(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            booking_id = data.get("booking_id")
-            mpesa_number = data.get("mpesa_number")
+            booking_id = data.get("bookingId")
+            mpesa_number = data.get("mpesaNumber")
+            selected_route = data.get("selectedRoute")
 
-            # Validate booking
-            booking = Booking.objects.filter(id=booking_id, user=request.user, status="Pending").first()
-            if not booking:
-                return JsonResponse({"success": False, "message": "Invalid or expired booking!"})
+            # Get trip details
+            trip = Trip.objects.filter(route__route_name=selected_route, status="Upcoming").first()
+            if not trip:
+                return JsonResponse({"success": False, "message": "No upcoming trips found for this route."})
 
-            # Process payment (mocked for now)
-            payment = Payment.objects.create(
-                user=request.user,
-                booking=booking,
-                amount=booking.bus.fare,
-                status="Completed",
-                payment_method="M-Pesa",
-                mpesa_number=mpesa_number
+            # Fetch available seats
+            booked_seats = Booking.objects.filter(trip=trip, status="confirmed").values_list("seat_number", flat=True)
+            total_seats = trip.bus.capacity
+            available_seats = [seat for seat in range(1, total_seats + 1) if seat not in booked_seats]
+
+            return JsonResponse({
+                "success": True,
+                "message": "Payment successful!", 
+                "busNumber": trip.bus.bus_number,
+                "departureDate": trip.departure_date.strftime("%Y-%m-%d"),
+                "availableSeats": available_seats
+            })
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "message": "Invalid JSON data."})
+    
+    return JsonResponse({"success": False, "message": "Invalid request."}, status=400)
+
+@login_required
+def reserve_seat2(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            bus_number = data.get("busNumber")
+            seat_number = data.get("seatNumber")
+
+            if not bus_number or not seat_number:
+                return JsonResponse({"success": False, "message": "Bus number and seat number are required!"})
+
+            # ✅ Get the trip using bus_number
+            trip = Trip.objects.filter(bus__bus_number=bus_number, status="Upcoming").first()
+            if not trip:
+                return JsonResponse({"success": False, "message": "Trip not found for the given bus!"})
+
+            # ✅ Check if seat is already booked (either confirmed or pending)
+            if Booking.objects.filter(trip=trip, seat_number=seat_number).exists():
+                return JsonResponse({"success": False, "message": "This seat is already booked!"})
+
+            # ✅ Create a pending booking (use trip instead of bus)
+            booking = Booking.objects.create(
+                user=request.user, 
+                trip=trip,  
+                seat_number=seat_number, 
+                status="pending"
             )
 
-            # Confirm the booking
-            booking.status = "Confirmed"
-            booking.save()
+            # ✅ Get user details
+            full_name = request.user.get_full_name() or request.user.username  # Fallback to username
+            email = request.user.email
+            phone = getattr(request.user, "phone", "")  # Safer way to get phone attribute
 
-            return JsonResponse({"success": True, "message": "Payment successful! Your seat is now confirmed."})
+            return JsonResponse({
+                "success": True,
+                "message": f"Seat {seat_number} reserved temporarily! Please complete payment.",
+                "booking_id": booking.id,
+                "route": trip.route.route_name,  # Ensure correct route retrieval
+                "fare": trip.route.fare,  # Ensure correct fare retrieval
+                "full_name": full_name,
+                "email": email,
+                "phone": phone
+            })
+
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "message": "Invalid JSON data!"})
+
+        except IntegrityError:
+            return JsonResponse({"success": False, "message": "This seat is already booked!"})
 
         except Exception as e:
             return JsonResponse({"success": False, "message": str(e)})
 
     return JsonResponse({"success": False, "message": "Invalid request!"})
+
+@csrf_exempt
+def make_payment(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            booking_id = data.get("bookingId")
+            phone_number = data.get("mpesaNumber")
+
+            if not booking_id or not phone_number:
+                return JsonResponse({"success": False, "message": "Missing required fields."})
+
+            # Convert phone number to international format (E.164)
+            if phone_number.startswith("07"):
+                phone_number = "254" + phone_number[1:]
+            elif phone_number.startswith("+254"):
+                phone_number = phone_number[1:]  # Remove "+"
+            elif not phone_number.startswith("254"):
+                return JsonResponse({"success": False, "message": "Invalid phone number format. Use 07XXXXXXXX or 2547XXXXXXXX."})
+
+            # Retrieve booking
+            booking = Booking.objects.get(id=booking_id)
+            amount = float(booking.trip.route.fare)  # Convert Decimal to float
+
+            # **Step 1: Create a Payment record before initiating payment**
+            payment = Payment.objects.create(
+                user=booking.user,
+                booking=booking,
+                amount=amount,
+                mpesa_transaction_id="pending",  # Will be updated after STK push response
+                status="pending",
+            )
+
+            # Get access token
+            access_token = MpesaAccessToken.get_access_token()
+            api_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+            headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+
+            # Payment request payload
+            payload = {
+                "BusinessShortCode": LipanaMpesaPpassword.BusinessShortCode,
+                "Password": LipanaMpesaPpassword.encode_password(),
+                "Timestamp": LipanaMpesaPpassword.get_timestamp(),
+                "TransactionType": "CustomerPayBillOnline",
+                "Amount": amount,
+                "PartyA": phone_number,
+                "PartyB": LipanaMpesaPpassword.BusinessShortCode,
+                "PhoneNumber": phone_number,
+                "CallBackURL": "https://cded-197-155-73-19.ngrok-free.app/mpesa_callback/",
+                "AccountReference": "ENA Coach",
+                "TransactionDesc": f"Bus ticket payment for {booking.trip.route.route_name}"
+            }
+
+            response = requests.post(api_url, json=payload, headers=headers)
+            response_data = response.json()
+
+            if response.status_code == 200:
+                # **Step 2: Update the Payment record with MerchantRequestID**
+                merchant_request_id = response_data.get("MerchantRequestID")
+                if merchant_request_id:
+                    payment.mpesa_transaction_id = merchant_request_id
+                    payment.save()
+
+                return JsonResponse({"success": True, "message": "Payment request sent successfully!"})
+            else:
+                return JsonResponse({"success": False, "message": response_data.get("errorMessage", "Payment failed.")})
+
+        except Booking.DoesNotExist:
+            return JsonResponse({"success": False, "message": "Booking not found."})
+
+        except Exception as e:
+            return JsonResponse({"success": False, "message": str(e)})
+
+    return JsonResponse({"success": False, "message": "Invalid request method."})
+
+
+@csrf_exempt
+def mpesa_callback(request):
+    try:
+        print("Received MPESA Callback:", request.body)  # Debugging Line
+        data = json.loads(request.body)
+
+        result_code = data["Body"]["stkCallback"]["ResultCode"]
+        merchant_request_id = data["Body"]["stkCallback"]["MerchantRequestID"]
+        transaction_id = data["Body"]["stkCallback"].get("MpesaReceiptNumber")  # Get MPESA Receipt Number
+
+        print("Transaction ID:", transaction_id)  # Debugging Line
+        print("Merchant Request ID:", merchant_request_id)  # Debugging Line
+
+        if result_code == 0:  # Payment Successful
+            payment = Payment.objects.filter(mpesa_transaction_id=merchant_request_id, status="pending").first()
+            if not payment:
+                return JsonResponse({"success": False, "message": "Payment record not found."})
+
+            # ✅ Fix: Update Payment model with actual transaction ID
+            if transaction_id:
+                payment.mpesa_transaction_id = transaction_id  # Save the real MPESA Transaction ID
+            payment.status = "completed"
+            payment.save()
+
+            booking = payment.booking
+            booking.status = "confirmed"
+            booking.save()
+
+            return JsonResponse({
+                "success": True,
+                "message": "Payment successful!",
+                "transactionId": transaction_id,
+                "bookingId": booking.id,
+                "amount": payment.amount
+            })
+        else:
+            return JsonResponse({"success": False, "message": "Payment failed!"})
+
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)})
+
+
+
+
+
+
+@csrf_exempt
+def generate_receipt(request, booking_id):
+    try:
+        booking = Booking.objects.get(id=booking_id)
+        payment = Payment.objects.filter(booking=booking, status="completed").first()  # Get completed payment
+
+        if not payment:
+            return JsonResponse({"success": False, "message": "No completed payment found for this booking."})
+
+        buffer = io.BytesIO()
+        pdf = canvas.Canvas(buffer)
+        
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.drawString(100, 780, "ENA Coach Bus Ticket Payment Receipt")
+        pdf.setFont("Helvetica", 12)
+        pdf.drawString(100, 750, f"Transaction ID: {payment.mpesa_transaction_id}")  # ✅ Updated Transaction ID
+        pdf.drawString(100, 730, f"Booking ID: {booking.id}")
+        pdf.drawString(100, 710, f"Phone Number: {booking.user.phone}")  # ✅ Use 'phone' field
+        pdf.drawString(100, 690, f"Amount Paid: KES {payment.amount}")
+        pdf.drawString(100, 670, "Thank you for choosing ENA Coach!")
+        
+        pdf.showPage()
+        pdf.save()
+
+        buffer.seek(0)
+        return FileResponse(buffer, as_attachment=True, filename=f"Payment_Receipt_{booking_id}.pdf")
+
+    except Booking.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Booking not found."})
+
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)})
+
+@csrf_exempt
+def check_payment_status(request, booking_id):
+    try:
+        payment = Payment.objects.filter(booking_id=booking_id, status="completed").first()
+
+        if payment:
+            return JsonResponse({
+                "success": True,
+                "status": "completed",
+                "amount": payment.amount,
+                "transactionId": payment.mpesa_transaction_id
+            })
+        else:
+            return JsonResponse({"success": False, "status": "pending"})
+
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)})
+
+
 
 
 
